@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>루카와 마르카 : 지구탈출연구실</title>
+<title>루카와 마르카 : 지구탈출연구실 - STAGE 1</title>
 <style>
   html, body {
     margin:0; padding:0; height:100%;
-    background:#0b0b0f; overflow:hidden;
+    background:#000; overflow:hidden;
     touch-action:none;
     font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   }
@@ -17,7 +17,8 @@
     background:#0e1020;
   }
   .topbar{
-    position:absolute; left:10px; right:10px;
+    position:absolute;
+    left:10px; right:10px;
     top:max(10px, env(safe-area-inset-top));
     display:flex; justify-content:space-between;
     pointer-events:none;
@@ -27,15 +28,51 @@
     pointer-events:auto;
     padding:10px 14px;
     border-radius:14px;
-    background: rgba(12,16,28,0.6);
+    background: rgba(12,16,28,0.65);
     border:1px solid rgba(42,49,67,0.9);
     color:#e8f2ff;
-    font-weight:800;
+    font-weight:900;
     font-size:12px;
     user-select:none; -webkit-user-select:none;
     touch-action:none;
   }
   .btn:active{ transform: translateY(1px); }
+
+  .hint{
+    position:absolute;
+    left:50%; transform:translateX(-50%);
+    top: max(54px, calc(env(safe-area-inset-top) + 54px));
+    padding:6px 10px;
+    border-radius:999px;
+    background: rgba(0,0,0,0.25);
+    border:1px solid rgba(255,255,255,0.12);
+    color: rgba(232,242,255,0.8);
+    font-size:12px;
+    pointer-events:none;
+    z-index:10;
+  }
+
+  .startLayer{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(0,0,0,0.45);
+    z-index:20;
+    touch-action:none;
+  }
+  .card{
+    width:min(420px, 92vw);
+    background: rgba(0,0,0,0.55);
+    border:1px solid rgba(255,255,255,0.15);
+    border-radius:18px;
+    padding:18px 16px;
+    color:#e8f2ff;
+    text-align:center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .card .t{ font-weight:950; font-size:18px; margin-bottom:8px; }
+  .card .s{ font-size:13px; opacity:0.85; line-height:1.35; }
+  .card .logo{ margin-top:10px; font-weight:900; letter-spacing:1px; color:#76d2c8; font-size:13px; }
 </style>
 </head>
 <body>
@@ -46,18 +83,30 @@
   <div class="btn" id="btnSwap">SWAP (루카/마르카)</div>
   <div class="btn" id="btnRestart">RESTART</div>
 </div>
+<div class="hint">드래그 이동 · 자동 발사 · 2:1 비율 고정</div>
+
+<div class="startLayer" id="startLayer">
+  <div class="card">
+    <div class="t">루카와 마르카 : 지구탈출연구실</div>
+    <div class="s">STAGE 1 · 세로 슈팅 데모<br/>화면을 터치하면 시작</div>
+    <div class="logo">TERRA ESCAPE LAB</div>
+  </div>
+</div>
 
 <script>
 (() => {
-  // ====== logical resolution (portrait) ======
-  const LOG_W = 540, LOG_H = 960;
+  // ====== 2:1 고정 논리 해상도 ======
+  const LOG_W = 360;
+  const LOG_H = 720; // 세로:가로 = 2:1
 
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d", { alpha:false });
 
   const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
   const lerp  = (a,b,t)=>a+(b-a)*t;
+  const rand  = (a,b)=>a+Math.random()*(b-a);
 
+  // ----- device canvas resize -----
   function resize(){
     const dpr = Math.max(1, window.devicePixelRatio || 1);
     canvas.width  = Math.floor(innerWidth  * dpr);
@@ -66,91 +115,148 @@
   addEventListener("resize", resize);
   resize();
 
-  function beginFrame() {
-  // 화면 비율 유지 스케일
-  const scale = Math.min(
-    canvas.width / LOG_W,
-    canvas.height / LOG_H
-  );
+  // ----- 2:1 maintain + letterbox -----
+  let view = { scale:1, offX:0, offY:0, rect:null };
+  function beginFrame(){
+    // fill whole canvas black first (letterbox color)
+    ctx.save();
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.restore();
 
-  const offsetX = (canvas.width  - LOG_W * scale) / 2;
-  const offsetY = (canvas.height - LOG_H * scale) / 2;
+    const scale = Math.min(canvas.width/LOG_W, canvas.height/LOG_H);
+    const offX = (canvas.width  - LOG_W*scale)/2;
+    const offY = (canvas.height - LOG_H*scale)/2;
 
-  ctx.setTransform(
-    scale, 0,
-    0, scale,
-    offsetX, offsetY
-  );
-
-  // 여백 영역 클리어 (검은 레터박스)
-  ctx.save();
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.restore();
-}
-
-  // ====== images ======
-  const imgLuca = new Image();
-  imgLuca.src = "assets/luca.png";
-
-  const imgMarca = new Image();
-  imgMarca.src = "assets/marca.png";
-
-  // ====== state (바로 PLAY로 시작) ======
-  const State = { PLAY:"PLAY" };
-  let state = State.PLAY;
-
-  // ====== player ======
-  const player = {
-    x: LOG_W/2,
-    y: LOG_H*0.80,
-    r: 18,
-    char: "LUCA",
-  };
-
-  // ====== control target (드래그 목표) ======
-  const drag = { active:false, id:null, tx: player.x, ty: player.y };
-
-  function screenToLogical(clientX, clientY){
-    const rect = canvas.getBoundingClientRect();
-    const nx = (clientX - rect.left) / rect.width;
-    const ny = (clientY - rect.top)  / rect.height;
-    return { x: nx*LOG_W, y: ny*LOG_H };
+    view.scale = scale; view.offX = offX; view.offY = offY;
+    ctx.setTransform(scale, 0, 0, scale, offX, offY);
   }
 
-  // --- Pointer events (Android/대부분 브라우저) ---
-  canvas.addEventListener("pointerdown", (e)=>{
+  // ----- logical <-> screen -----
+  function screenToLogical(clientX, clientY){
+    const rect = canvas.getBoundingClientRect();
+    const px = (clientX - rect.left) / rect.width  * canvas.width;
+    const py = (clientY - rect.top)  / rect.height * canvas.height;
+
+    // undo letterbox transform
+    const x = (px - view.offX) / view.scale;
+    const y = (py - view.offY) / view.scale;
+    return { x, y };
+  }
+
+  // ====== Assets (확정 파일명) ======
+  const imgLuca = new Image();   imgLuca.src  = "assets/luca.png";
+  const imgMarca = new Image();  imgMarca.src = "assets/marca.png";
+
+  const imgRoboBlue = new Image(); imgRoboBlue.src = "assets/robo_blue.png";
+  const imgRoboRed  = new Image(); imgRoboRed.src  = "assets/robo_red.png";
+
+  // ====== UI ======
+  const startLayer = document.getElementById("startLayer");
+  const btnSwap = document.getElementById("btnSwap");
+  const btnRestart = document.getElementById("btnRestart");
+
+  // ====== State ======
+  const State = { TITLE:"TITLE", PLAY:"PLAY", WIN:"WIN", LOSE:"LOSE" };
+  let state = State.TITLE;
+  let timeInPlay = 0;
+
+  // ====== Player ======
+  const player = {
+    x: LOG_W/2,
+    y: LOG_H*0.82,
+    r: 14,         // hit radius
+    char: "LUCA",
+    hp: 100,
+    inv: 0,
+  };
+
+  const drag = { active:false, id:null, tx: player.x, ty: player.y };
+
+  // ====== Bullets ======
+  const bullets = [];
+  let fireCD = 0;
+
+  // ====== Enemies (robo_blue) ======
+  const enemies = [];
+  let spawnCD = 0;
+
+  // ====== Boss (robo_red) ======
+  const boss = {
+    active:false,
+    x: LOG_W/2,
+    y: -120,
+    r: 34,
+    hp: 500,
+    maxHP: 500,
+    t: 0,
+    enterDone:false
+  };
+
+  function resetGame(){
+    state = State.TITLE;
+    timeInPlay = 0;
+
+    player.x = LOG_W/2;
+    player.y = LOG_H*0.82;
+    player.char = "LUCA";
+    player.hp = 100;
+    player.inv = 0;
+
+    drag.active=false; drag.id=null; drag.tx=player.x; drag.ty=player.y;
+
+    bullets.length = 0;
+    enemies.length = 0;
+    fireCD = 0;
+    spawnCD = 0;
+
+    boss.active = false;
+    boss.x = LOG_W/2;
+    boss.y = -120;
+    boss.hp = boss.maxHP;
+    boss.t = 0;
+    boss.enterDone = false;
+
+    startLayer.style.display = "flex";
+  }
+
+  function startPlay(){
+    if (state !== State.TITLE) return;
+    state = State.PLAY;
+    startLayer.style.display = "none";
+  }
+
+  // ====== Input: Pointer + Touch fallback ======
+  function onPointerDown(e){
     e.preventDefault();
+    startPlay();
     drag.active = true;
     drag.id = e.pointerId;
     canvas.setPointerCapture(e.pointerId);
     const p = screenToLogical(e.clientX, e.clientY);
     drag.tx = p.x; drag.ty = p.y;
-  }, { passive:false });
-
-  canvas.addEventListener("pointermove", (e)=>{
+  }
+  function onPointerMove(e){
     if (!drag.active || e.pointerId !== drag.id) return;
     e.preventDefault();
     const p = screenToLogical(e.clientX, e.clientY);
     drag.tx = p.x; drag.ty = p.y;
-  }, { passive:false });
-
-  canvas.addEventListener("pointerup", (e)=>{
+  }
+  function onPointerUp(e){
     if (e.pointerId !== drag.id) return;
     e.preventDefault();
     drag.active = false; drag.id = null;
-  }, { passive:false });
+  }
 
-  canvas.addEventListener("pointercancel", (e)=>{
-    if (e.pointerId !== drag.id) return;
-    e.preventDefault();
-    drag.active = false; drag.id = null;
-  }, { passive:false });
+  canvas.addEventListener("pointerdown", onPointerDown, { passive:false });
+  canvas.addEventListener("pointermove", onPointerMove, { passive:false });
+  canvas.addEventListener("pointerup", onPointerUp, { passive:false });
+  canvas.addEventListener("pointercancel", onPointerUp, { passive:false });
 
-  // --- Touch fallback (iOS에서 pointer가 이상할 때 대비) ---
   function onTouch(e){
     e.preventDefault();
+    startPlay();
     const t = e.touches[0] || e.changedTouches[0];
     if (!t) return;
     const p = screenToLogical(t.clientX, t.clientY);
@@ -162,66 +268,165 @@
   canvas.addEventListener("touchend",   onTouch, { passive:false });
   canvas.addEventListener("touchcancel",onTouch, { passive:false });
 
-  // 페이지 스크롤 방지(안전)
   addEventListener("touchmove", (e)=>e.preventDefault(), { passive:false });
 
-  // ====== UI Buttons ======
-  document.getElementById("btnSwap").addEventListener("pointerdown", (e)=>{
+  // Overlay also starts
+  startLayer.addEventListener("pointerdown", (e)=>{ e.preventDefault(); startPlay(); }, { passive:false });
+
+  // Buttons
+  btnSwap.addEventListener("pointerdown", (e)=>{
     e.preventDefault();
-    player.char = (player.char==="LUCA") ? "MARCA" : "LUCA";
+    if (state !== State.PLAY) return;
+    player.char = (player.char === "LUCA") ? "MARCA" : "LUCA";
   }, { passive:false });
 
-  document.getElementById("btnRestart").addEventListener("pointerdown", (e)=>{
+  btnRestart.addEventListener("pointerdown", (e)=>{
     e.preventDefault();
-    // reset
-    player.x = LOG_W/2;
-    player.y = LOG_H*0.80;
-    player.char = "LUCA";
-    drag.tx = player.x; drag.ty = player.y;
-    drag.active = false; drag.id = null;
+    resetGame();
   }, { passive:false });
 
-  // ====== shooting (auto) ======
-  const bullets = [];
-  let fireCD = 0;
-
+  // ====== Gameplay helpers ======
   function fire(dt){
-    fireCD -= dt;
+    fireCD = Math.max(0, fireCD - dt);
     if (fireCD > 0) return;
-    bullets.push({ x: player.x, y: player.y - 36, vy: -760, r: 4, t:0, life:1.6 });
-    fireCD = 0.12;
+
+    bullets.push({
+      x: player.x,
+      y: player.y - 26,
+      vy: -760,
+      r: 3.2,
+      dmg: (player.char === "LUCA") ? 12 : 10,
+      life: 1.6,
+      t: 0
+    });
+    fireCD = (player.char === "LUCA") ? 0.11 : 0.14;
+  }
+
+  function spawnEnemy(){
+    enemies.push({
+      x: rand(30, LOG_W-30),
+      y: -40,
+      vy: rand(90, 150),
+      r: 16,
+      hp: 26
+    });
+  }
+
+  function circleHit(ax,ay,ar, bx,by,br){
+    const dx=ax-bx, dy=ay-by;
+    return dx*dx + dy*dy <= (ar+br)*(ar+br);
+  }
+
+  function drawImageCentered(img, x, y, size){
+    ctx.drawImage(img, x - size/2, y - size/2, size, size);
   }
 
   function drawPlayer(){
-    const img = (player.char==="LUCA") ? imgLuca : imgMarca;
-    const size = 78;
-    ctx.drawImage(img, player.x - size/2, player.y - size/2, size, size);
+    const img = (player.char === "LUCA") ? imgLuca : imgMarca;
+    drawImageCentered(img, player.x, player.y, 72);
   }
 
-  // ====== loop ======
+  function drawEnemy(e){
+    drawImageCentered(imgRoboBlue, e.x, e.y, 64);
+  }
+
+  function drawBoss(){
+    if (!boss.active) return;
+    drawImageCentered(imgRoboRed, boss.x, boss.y, 150);
+  }
+
+  function drawHUD(){
+    // minimal HUD: HP + boss bar
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillRect(8, 8, 140, 34);
+
+    ctx.fillStyle = "rgba(232,242,255,0.9)";
+    ctx.font = "12px system-ui";
+    ctx.fillText("HP", 14, 22);
+
+    ctx.fillStyle = "rgba(255,90,90,0.85)";
+    ctx.fillRect(36, 14, 104*(player.hp/100), 10);
+    ctx.strokeStyle = "rgba(255,255,255,0.2)";
+    ctx.strokeRect(36, 14, 104, 10);
+
+    // boss bar
+    if (boss.active) {
+      const w = 260, h = 12;
+      const x = (LOG_W - w)/2;
+      const y = 40;
+      ctx.fillStyle = "rgba(0,0,0,0.35)";
+      ctx.fillRect(x-8, y-10, w+16, h+28);
+
+      ctx.fillStyle = "rgba(232,242,255,0.9)";
+      ctx.fillText("ROBO FATHER", x, y);
+      const p = Math.max(0, boss.hp/boss.maxHP);
+      ctx.fillStyle = "rgba(255,120,120,0.9)";
+      ctx.fillRect(x, y+6, w*p, h);
+      ctx.strokeStyle = "rgba(255,255,255,0.2)";
+      ctx.strokeRect(x, y+6, w, h);
+    }
+    ctx.restore();
+  }
+
+  // ====== Background ======
+  let bgScroll = 0;
+  function drawBackground(dt){
+    bgScroll += 120*dt;
+
+    ctx.fillStyle = "#0f1220";
+    ctx.fillRect(0,0,LOG_W,LOG_H);
+
+    // simple lab panels scrolling down
+    const s = bgScroll % 180;
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = "#18223a";
+    for (let i=0;i<6;i++){
+      const y = i*140 - s;
+      ctx.fillRect(18, y, 90, 50);
+      ctx.fillRect(LOG_W-108, y+26, 90, 50);
+      ctx.fillRect(130, y+70, 100, 36);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ====== Main loop ======
   let last = performance.now();
   function loop(t){
     const dt = Math.min(0.033, (t-last)/1000);
     last = t;
 
     beginFrame();
+    drawBackground(dt);
 
-    // background
-    ctx.fillStyle = "#0f1220";
-    ctx.fillRect(0,0,LOG_W,LOG_H);
+    if (state === State.PLAY) {
+      timeInPlay += dt;
 
-    if (state === State.PLAY){
-      // move toward target (드래그 안 해도 마지막 목표 유지)
-      const tx = clamp(drag.tx, 40, LOG_W-40);
-      const ty = clamp(drag.ty, LOG_H*0.45, LOG_H-60);
+      // move player toward target
+      const tx = clamp(drag.tx, 22, LOG_W-22);
+      const ty = clamp(drag.ty, LOG_H*0.45, LOG_H-46);
       player.x = lerp(player.x, tx, 0.28);
       player.y = lerp(player.y, ty, 0.28);
 
       // auto fire
       fire(dt);
+
+      // spawn enemies until boss
+      if (!boss.active) {
+        spawnCD = Math.max(0, spawnCD - dt);
+        if (spawnCD <= 0) {
+          spawnEnemy();
+          spawnCD = rand(0.35, 0.65);
+        }
+      }
+
+      // boss 등장 타이밍 (원하면 숫자 바꾸면 됨)
+      if (!boss.active && timeInPlay >= 18) {
+        boss.active = true;
+      }
     }
 
-    // bullets update
+    // update bullets
     for (let i=bullets.length-1;i>=0;i--){
       const b = bullets[i];
       b.t += dt;
@@ -229,19 +434,88 @@
       if (b.t > b.life || b.y < -60) bullets.splice(i,1);
     }
 
-    // bullets draw
-    ctx.fillStyle = "#e8f2ff";
+    // update enemies
+    for (let i=enemies.length-1;i>=0;i--){
+      const e = enemies[i];
+      e.y += e.vy * dt;
+      if (e.y > LOG_H + 60) enemies.splice(i,1);
+    }
+
+    // update boss (enter then sway)
+    if (boss.active) {
+      boss.t += dt;
+      if (!boss.enterDone) {
+        boss.y += 140*dt;
+        if (boss.y >= 120) { boss.y = 120; boss.enterDone = true; }
+      } else {
+        boss.x = LOG_W/2 + Math.sin(boss.t*1.2)*60;
+        boss.y = 120 + Math.sin(boss.t*1.6)*10;
+      }
+    }
+
+    // collisions: bullets vs enemies/boss
+    for (let i=bullets.length-1;i>=0;i--){
+      const b = bullets[i];
+      let hit = false;
+
+      // vs enemies
+      for (let j=enemies.length-1;j>=0;j--){
+        const e = enemies[j];
+        if (circleHit(b.x,b.y,b.r, e.x,e.y,e.r)) {
+          e.hp -= b.dmg;
+          hit = true;
+          if (e.hp <= 0) enemies.splice(j,1);
+          break;
+        }
+      }
+
+      // vs boss
+      if (!hit && boss.active && circleHit(b.x,b.y,b.r, boss.x,boss.y,boss.r)) {
+        boss.hp -= b.dmg;
+        hit = true;
+        if (boss.hp <= 0) {
+          boss.hp = 0;
+          state = State.WIN;
+        }
+      }
+
+      if (hit) bullets.splice(i,1);
+    }
+
+    // draw enemies / boss / bullets / player
+    for (const e of enemies) drawEnemy(e);
+    drawBoss();
+
+    // bullets
+    ctx.fillStyle = "rgba(232,242,255,0.95)";
     for (const b of bullets){
       ctx.beginPath();
       ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
       ctx.fill();
     }
 
-    // player
     drawPlayer();
+    drawHUD();
+
+    // overlays
+    if (state === State.WIN) {
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
+      ctx.fillRect(0,0,LOG_W,LOG_H);
+      ctx.fillStyle = "rgba(232,242,255,0.95)";
+      ctx.textAlign = "center";
+      ctx.font = "900 22px system-ui";
+      ctx.fillText("BOSS DOWN", LOG_W/2, LOG_H/2 - 10);
+      ctx.font = "650 12px system-ui";
+      ctx.fillText("RESTART로 다시", LOG_W/2, LOG_H/2 + 16);
+      ctx.restore();
+      ctx.textAlign = "left";
+    }
 
     requestAnimationFrame(loop);
   }
+
+  resetGame();
   requestAnimationFrame(loop);
 })();
 </script>
