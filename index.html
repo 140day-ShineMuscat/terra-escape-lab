@@ -1,1170 +1,245 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>루카와 마르카 : 지구탈출연구실 - STAGE 1 (세로 슈팅)</title>
-  <style>
-    :root {
-      --bg:#0b0b0f;
-      --panel: rgba(12,16,28,0.55);
-      --border: rgba(42,49,67,0.9);
-      --text: rgba(232,242,255,0.92);
-      --muted: rgba(232,242,255,0.72);
-      --accent: rgba(118,210,200,0.85);
-      --warn: rgba(255,90,90,0.85);
-      --fire: rgba(255,189,102,0.85);
-    }
-    html, body {
-      margin:0; padding:0; height:100%;
-      background: var(--bg);
-      overflow:hidden;
-      touch-action:none; /* 핵심: 모바일 스크롤/줌 방지 */
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    }
-    #root { position:fixed; inset:0; }
-    canvas {
-      position:absolute; inset:0;
-      width:100vw; height:100vh; /* 화면 가득 */
-      background:#0e1020;
-    }
+<meta charset="utf-8" />
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>루카와 마르카 : 지구탈출연구실</title>
 
-    /* 작은 상단 버튼들 (화면 안 가리게) */
-    .topbar {
-      position:absolute;
-      left:10px; right:10px; top: max(10px, env(safe-area-inset-top));
-      display:flex; justify-content:space-between; gap:10px;
-      pointer-events:none;
-    }
-    .btn {
-      pointer-events:auto;
-      user-select:none; -webkit-user-select:none;
-      padding:10px 12px;
-      border-radius:14px;
-      background: var(--panel);
-      border:1px solid var(--border);
-      color: var(--text);
-      font-weight: 800;
-      font-size: 12px;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      display:flex; align-items:center; gap:8px;
-      touch-action:none;
-    }
-    .btn:active { transform: translateY(1px); }
-    .badge {
-      font-weight:900;
-      padding:2px 8px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.08);
-      color: var(--muted);
-      font-size: 11px;
-    }
-    .hint {
-      position:absolute;
-      left:50%;
-      transform:translateX(-50%);
-      top: max(56px, calc(env(safe-area-inset-top) + 56px));
-      background: rgba(0,0,0,0.25);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: var(--muted);
-      padding:6px 10px;
-      border-radius:999px;
-      font-size: 12px;
-      pointer-events:none;
-      text-align:center;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      max-width: 92vw;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #0b0b0f;
+  overflow: hidden;
+  touch-action: none;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+canvas {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #0e1020;
+}
 
-    /* 시작 화면 안내 (터치) */
-    .tapToStart {
-      position:absolute; inset:0;
-      display:flex; align-items:center; justify-content:center;
-      pointer-events:none;
-    }
-    .card {
-      pointer-events:none;
-      width:min(420px, 92vw);
-      background: rgba(0,0,0,0.38);
-      border:1px solid rgba(255,255,255,0.14);
-      border-radius: 18px;
-      padding: 18px 16px;
-      text-align:center;
-      color: var(--text);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-    .title { font-weight: 950; font-size: 18px; letter-spacing: -0.2px; }
-    .sub { margin-top:8px; font-size: 13px; color: var(--muted); line-height: 1.35; }
-    .logo { margin-top:10px; font-weight: 900; color: var(--accent); font-size: 13px; letter-spacing: 1px; }
-  </style>
+/* 상단 UI */
+.topbar {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: max(10px, env(safe-area-inset-top));
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.btn {
+  pointer-events: auto;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(12,16,28,0.6);
+  border: 1px solid rgba(42,49,67,0.9);
+  color: #e8f2ff;
+  font-weight: 800;
+  font-size: 12px;
+  user-select: none;
+}
+.btn:active { transform: translateY(1px); }
+
+/* 시작 안내 */
+.startLayer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.45);
+}
+.card {
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 18px;
+  padding: 18px;
+  text-align: center;
+  color: #e8f2ff;
+}
+.card h1 {
+  font-size: 18px;
+  margin: 0 0 8px 0;
+}
+.card p {
+  font-size: 13px;
+  margin: 0;
+  opacity: 0.85;
+}
+.logo {
+  margin-top: 10px;
+  font-weight: 900;
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: #76d2c8;
+}
+</style>
 </head>
+
 <body>
-<div id="root">
-  <canvas id="game"></canvas>
+<canvas id="game"></canvas>
 
-  <div class="topbar">
-    <div class="btn" id="btnSwap">SWAP <span class="badge">루카/마르카</span></div>
-    <div class="btn" id="btnRestart">RESTART</div>
-  </div>
+<div class="topbar">
+  <div class="btn" id="btnSwap">SWAP (루카/마르카)</div>
+  <div class="btn" id="btnRestart">RESTART</div>
+</div>
 
-  <div class="hint">드래그로 이동 · 자동 발사 · 위에서 적/아이템 하강 (세로 슈팅)</div>
-
-  <div class="tapToStart" id="tapLayer">
-    <div class="card">
-      <div class="title">루카와 마르카 : 지구탈출연구실</div>
-      <div class="sub">
-        STAGE 1 (세로 슈팅 데모)<br/>
-        화면을 터치하면 시작 · 손가락으로 기체를 끌어 움직여
-      </div>
-      <div class="logo">TERRA ESCAPE LAB</div>
-    </div>
+<div class="startLayer" id="startLayer">
+  <div class="card">
+    <h1>루카와 마르카 : 지구탈출연구실</h1>
+    <p>세로 슈팅 · 드래그 이동 · 자동 발사</p>
+    <div class="logo">TERRA ESCAPE LAB</div>
   </div>
 </div>
 
 <script>
-(() => {
-  // ====== Logical resolution (portrait) ======
-  const LOG_W = 540;
-  const LOG_H = 960;
+/* ================== 기본 설정 ================== */
+const LOG_W = 540;
+const LOG_H = 960;
 
-  const canvas = document.getElementById("game");
-  const ctx = canvas.getContext("2d", { alpha: false });
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-  function resize() {
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    canvas.width = Math.floor(window.innerWidth * dpr);
-    canvas.height = Math.floor(window.innerHeight * dpr);
+function resize() {
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  canvas.width = innerWidth * dpr;
+  canvas.height = innerHeight * dpr;
+}
+window.addEventListener("resize", resize);
+resize();
+
+function beginFrame() {
+  ctx.setTransform(
+    canvas.width / LOG_W, 0,
+    0, canvas.height / LOG_H,
+    0, 0
+  );
+}
+
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp = (a,b,t)=>a+(b-a)*t;
+
+/* ================== 이미지 로딩 ================== */
+const imgLuca = new Image();
+imgLuca.src = "assets/luca.png";
+
+const imgMarca = new Image();
+imgMarca.src = "assets/marca.png";
+
+/* ================== 게임 상태 ================== */
+let state = "TITLE";
+
+/* ================== 플레이어 ================== */
+const player = {
+  x: LOG_W/2,
+  y: LOG_H*0.8,
+  r: 18,
+  char: "LUCA",
+  hp: 100,
+};
+
+/* ================== 입력 (드래그 이동) ================== */
+let dragging = false;
+canvas.addEventListener("pointerdown", e => {
+  if (state === "TITLE") {
+    state = "PLAY";
+    document.getElementById("startLayer").style.display = "none";
   }
-  window.addEventListener("resize", resize);
-  resize();
+  dragging = true;
+});
+canvas.addEventListener("pointerup", ()=> dragging=false);
+canvas.addEventListener("pointercancel", ()=> dragging=false);
+canvas.addEventListener("pointermove", e => {
+  if (!dragging) return;
+  const rect = canvas.getBoundingClientRect();
+  const nx = (e.clientX - rect.left) / rect.width;
+  const ny = (e.clientY - rect.top) / rect.height;
+  player.x = clamp(nx * LOG_W, 40, LOG_W-40);
+  player.y = clamp(ny * LOG_H, LOG_H*0.45, LOG_H-60);
+});
 
-  // We will render by stretching logical -> device to fill FULL screen
-  function beginFrame() {
-    const sx = canvas.width / LOG_W;
-    const sy = canvas.height / LOG_H;
-    ctx.setTransform(sx, 0, 0, sy, 0, 0);
-  }
+/* ================== UI 버튼 ================== */
+document.getElementById("btnSwap").onclick = () => {
+  if (state !== "PLAY") return;
+  player.char = player.char === "LUCA" ? "MARCA" : "LUCA";
+};
+document.getElementById("btnRestart").onclick = () => {
+  location.reload();
+};
 
-  // prevent scroll/zoom
-  window.addEventListener("touchmove", (e) => e.preventDefault(), { passive:false });
+/* ================== 총알 ================== */
+const bullets = [];
+let fireCD = 0;
 
-  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
-  const lerp = (a,b,t)=>a+(b-a)*t;
-  const rand = (a,b)=>a+Math.random()*(b-a);
-  const now = () => performance.now();
-
-  // ====== State ======
-  const State = { title:"TITLE", play:"PLAY", warning:"WARNING", bossIntro:"BOSS_INTRO", bossFight:"BOSS_FIGHT", win:"WIN", lose:"LOSE" };
-  let state = State.title;
-  let stateT = 0;
-
-  // ====== Touch control: drag-to-move ======
-  const touch = {
-    active:false,
-    id:null,
-    x: LOG_W/2,
-    y: LOG_H*0.78,
-  };
-
-  function screenToLogical(clientX, clientY) {
-    // Map client coords to logical coords based on canvas CSS fill
-    const rect = canvas.getBoundingClientRect();
-    const nx = (clientX - rect.left) / rect.width;
-    const ny = (clientY - rect.top) / rect.height;
-    return { x: nx * LOG_W, y: ny * LOG_H };
-  }
-
-  // Use Pointer Events
-  canvas.addEventListener("pointerdown", (e) => {
-    // tap starts game
-    if (state === State.title) {
-      state = State.play; stateT = 0;
-      document.getElementById("tapLayer").style.display = "none";
-    }
-
-    touch.active = true;
-    touch.id = e.pointerId;
-    canvas.setPointerCapture(e.pointerId);
-    const p = screenToLogical(e.clientX, e.clientY);
-    touch.x = p.x; touch.y = p.y;
+function fire(dt) {
+  fireCD -= dt;
+  if (fireCD > 0) return;
+  bullets.push({
+    x: player.x,
+    y: player.y - 28,
+    vy: -720,
+    r: 4
   });
-  canvas.addEventListener("pointermove", (e) => {
-    if (!touch.active || e.pointerId !== touch.id) return;
-    const p = screenToLogical(e.clientX, e.clientY);
-    touch.x = p.x; touch.y = p.y;
-  });
-  canvas.addEventListener("pointerup", (e) => {
-    if (e.pointerId !== touch.id) return;
-    touch.active = false; touch.id = null;
-  });
-  canvas.addEventListener("pointercancel", (e) => {
-    if (e.pointerId !== touch.id) return;
-    touch.active = false; touch.id = null;
-  });
+  fireCD = 0.12;
+}
 
-  // ====== UI Buttons ======
-  const btnSwap = document.getElementById("btnSwap");
-  const btnRestart = document.getElementById("btnRestart");
+/* ================== 그리기 ================== */
+function drawPlayer() {
+  const img = player.char === "LUCA" ? imgLuca : imgMarca;
+  const size = 72;
+  ctx.drawImage(
+    img,
+    player.x - size/2,
+    player.y - size/2,
+    size, size
+  );
+}
 
-  btnSwap.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    if (state === State.play || state === State.bossFight) {
-      player.char = (player.char === "LUCA") ? "MARCA" : "LUCA";
-      addParticle(player.x, player.y, 12, 0.9);
-    }
-  });
+/* ================== 메인 루프 ================== */
+let last = performance.now();
+function loop(t) {
+  const dt = Math.min(0.033, (t-last)/1000);
+  last = t;
 
-  btnRestart.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    resetGame();
-    document.getElementById("tapLayer").style.display = "flex";
-  });
+  beginFrame();
 
-  // ====== Game Objects ======
-  const bullets = [];
-  const enemies = [];
-  const eBullets = [];
-  const items = [];
-  const particles = [];
+  /* 배경 */
+  ctx.fillStyle = "#0f1220";
+  ctx.fillRect(0,0,LOG_W,LOG_H);
 
-  let screenShake = 0;
-  let glitch = 0;
-  let bgScroll = 0;
-
-  const player = {
-    x: LOG_W/2,
-    y: LOG_H*0.82,
-    vx:0, vy:0,
-    r: 18,
-    maxHP: 100,
-    hp: 100,
-    maxShield: 60,
-    shield: 60,
-    invuln: 0,
-    char: "LUCA", // LUCA / MARCA
-    score: 0,
-    chain: 1,
-    fireCD: 0,
-    overheat: 0,
-  };
-
-  const boss = {
-    active:false,
-    x: LOG_W/2,
-    y: -140,
-    vy: 70,
-    r: 92,
-    maxHP: 520,
-    hp: 520,
-    phase: 0,
-    timer: 0,
-  };
-
-  function resetGame() {
-    bullets.length=0; enemies.length=0; eBullets.length=0; items.length=0; particles.length=0;
-    player.x = LOG_W/2; player.y = LOG_H*0.82;
-    player.vx = player.vy = 0;
-    player.hp = player.maxHP;
-    player.shield = player.maxShield;
-    player.invuln = 0;
-    player.char = "LUCA";
-    player.score = 0;
-    player.chain = 1;
-    player.fireCD = 0;
-    player.overheat = 0;
-
-    boss.active = false;
-    boss.x = LOG_W/2;
-    boss.y = -140;
-    boss.hp = boss.maxHP;
-    boss.phase = 0;
-    boss.timer = 0;
-
-    screenShake = 0;
-    glitch = 0;
-    bgScroll = 0;
-
-    state = State.title;
-    stateT = 0;
+  if (state === "PLAY") {
+    fire(dt);
   }
 
-  // ====== Background (Stage 1 lab/house, vertical scrolling) ======
-  function drawBackground(dt) {
-    bgScroll += 140 * dt;
-
-    // base
-    ctx.fillStyle = "#0f1220";
-    ctx.fillRect(0,0,LOG_W,LOG_H);
-
-    // floor-ish: keep bottom darker
-    ctx.fillStyle = "#0c0f1b";
-    ctx.fillRect(0, LOG_H*0.72, LOG_W, LOG_H);
-
-    // panels/furniture scrolling downward (so it looks like you're moving up)
-    const s = bgScroll;
-    const py = (y) => (y + (s % 240));
-
-    ctx.globalAlpha = 0.9;
-    ctx.fillStyle = "#1a2238";
-    for (let i=0;i<6;i++){
-      const y = py(i*180) - 220;
-      ctx.fillRect(40, y, 120, 70);
-      ctx.fillRect(LOG_W-160, y+30, 120, 70);
-      ctx.fillRect(200, y+80, 140, 50);
-    }
-
-    // light beams
-    ctx.globalAlpha = 0.06;
-    ctx.fillStyle = "#8fd3ff";
-    for (let i=0;i<3;i++){
-      const y = py(i*260) - 260;
-      ctx.beginPath();
-      ctx.moveTo(60, y);
-      ctx.lineTo(140, y);
-      ctx.lineTo(240, y+360);
-      ctx.lineTo(20,  y+360);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-
-    // tiny noise dots
-    ctx.globalAlpha = 0.07;
-    ctx.fillStyle = "#ffffff";
-    for (let i=0;i<220;i++){
-      const x = (i*41) % LOG_W;
-      const y = ((i*97) % LOG_H);
-      ctx.fillRect(x, y, 1, 1);
-    }
-    ctx.globalAlpha = 1;
+  /* 총알 업데이트 */
+  for (let i=bullets.length-1;i>=0;i--) {
+    const b = bullets[i];
+    b.y += b.vy * dt;
+    if (b.y < -40) bullets.splice(i,1);
   }
 
-  // ====== Visual particles ======
-  function addParticle(x,y, n=8, base=1) {
-    for (let i=0;i<n;i++){
-      particles.push({
-        x,y,
-        vx: rand(-120,120)*base,
-        vy: rand(-140,140)*base,
-        life: rand(0.25,0.7),
-        t:0,
-        s: rand(1,3),
-      });
-    }
-  }
-
-  // ====== Drawing: Cats (simplified ship) ======
-  function drawCatShip(x,y, who) {
-    const isLuca = who === "LUCA";
-    ctx.save();
-    ctx.translate(x,y);
-
-    // tail
-    ctx.lineWidth = 7;
-    ctx.lineCap = "round";
-    ctx.strokeStyle = isLuca ? "#1b1b1f" : "#efe2c9";
+  /* 총알 그리기 */
+  ctx.fillStyle = "#e8f2ff";
+  for (const b of bullets) {
     ctx.beginPath();
-    ctx.moveTo(-14, 18);
-    ctx.quadraticCurveTo(-30, 26, -34, 40);
-    ctx.stroke();
-
-    // outline
-    ctx.lineWidth = 6;
-    ctx.strokeStyle = "#101015";
-    ctx.fillStyle = isLuca ? "#232328" : "#f3e7cf";
-
-    // body + head
-    ctx.beginPath(); ctx.roundRect(-16, -6, 34, 30, 14); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.roundRect(-18, -34, 38, 32, 14); ctx.fill(); ctx.stroke();
-
-    // ears
-    ctx.beginPath(); ctx.moveTo(-10, -34); ctx.lineTo(-18, -48); ctx.lineTo(-2, -40); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(8, -34);  ctx.lineTo(16, -48);  ctx.lineTo(0,  -40); ctx.closePath(); ctx.fill(); ctx.stroke();
-
-    // inner ears
-    ctx.lineWidth = 0;
-    ctx.fillStyle = "#e28b8b";
-    ctx.beginPath(); ctx.moveTo(-9, -36); ctx.lineTo(-14, -46); ctx.lineTo(-4, -41); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(7, -36);  ctx.lineTo(12, -46);  ctx.lineTo(2,  -41); ctx.closePath(); ctx.fill();
-
-    // Luca patterns
-    if (isLuca) {
-      ctx.fillStyle = "#f0f0f3";
-      ctx.globalAlpha = 0.95;
-      ctx.beginPath(); ctx.roundRect(-8, -26, 3, 14, 2); ctx.fill();
-      ctx.beginPath(); ctx.roundRect(-1, -27, 3, 16, 2); ctx.fill();
-      ctx.beginPath(); ctx.roundRect(6, -26, 3, 14, 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(1, 10, 9, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 1;
-    }
-
-    // necklace
-    if (isLuca) {
-      ctx.lineWidth = 5;
-      ctx.strokeStyle = "#c13b2f";
-      ctx.beginPath(); ctx.arc(1, -10, 12, Math.PI*0.1, Math.PI*0.9); ctx.stroke();
-      ctx.fillStyle = "#f0c24b";
-      ctx.strokeStyle = "#141414";
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(1, -6, 5.2, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-    } else {
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = "#d6a94b";
-      ctx.beginPath(); ctx.arc(1, -10, 12, Math.PI*0.1, Math.PI*0.9); ctx.stroke();
-    }
-
-    // face
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = "#101015";
-    if (isLuca) {
-      ctx.beginPath();
-      ctx.moveTo(-9, -22); ctx.lineTo(-2, -21);
-      ctx.moveTo(4, -21);  ctx.lineTo(11, -22);
-      ctx.stroke();
-      ctx.lineWidth = 0;
-      ctx.fillStyle="#101015";
-      ctx.beginPath(); ctx.arc(-5.5, -18, 2.2, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(7.5,  -18, 2.2, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle="#f7f7fb";
-      ctx.beginPath(); ctx.moveTo(-2,-11); ctx.lineTo(-4,-6); ctx.lineTo(-1,-7); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(4,-11);  ctx.lineTo(2,-6);  ctx.lineTo(5,-7); ctx.closePath(); ctx.fill();
-    } else {
-      ctx.beginPath();
-      ctx.arc(-6, -23, 6, Math.PI*1.1, Math.PI*1.7);
-      ctx.arc(8,  -23, 6, Math.PI*1.3, Math.PI*1.9);
-      ctx.stroke();
-      ctx.lineWidth = 0;
-      ctx.fillStyle="#101015";
-      ctx.beginPath(); ctx.arc(-6, -18, 2.1, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(8,  -18, 2.1, 0, Math.PI*2); ctx.fill();
-    }
-
-    // nose
-    ctx.fillStyle="#e4a1a1";
-    ctx.beginPath(); ctx.arc(1, -16, 2.4, 0, Math.PI*2); ctx.fill();
-
-    // thruster (downward)
-    ctx.globalAlpha = 0.85;
-    ctx.fillStyle = "#7bd0ff";
-    ctx.beginPath();
-    ctx.moveTo(-6, 26); ctx.lineTo(0, 46); ctx.lineTo(6, 26); ctx.closePath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
     ctx.fill();
-    ctx.globalAlpha = 1;
-
-    ctx.restore();
   }
 
-  function drawEnemy(e) {
-    ctx.save();
-    ctx.translate(e.x, e.y);
-    ctx.lineWidth = 6;
-    ctx.strokeStyle = "#0d0f14";
+  /* 플레이어 */
+  drawPlayer();
 
-    if (e.type === "DRONE") {
-      ctx.fillStyle = "#2c364e";
-      ctx.beginPath(); ctx.roundRect(-14,-10,28,20,8); ctx.fill(); ctx.stroke();
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = "#101522";
-      ctx.beginPath();
-      ctx.moveTo(-18, -14); ctx.lineTo(-10, -8);
-      ctx.moveTo(18, -14);  ctx.lineTo(10, -8);
-      ctx.stroke();
-      ctx.fillStyle="#ffcc66";
-      ctx.beginPath(); ctx.arc(0,0,3,0,Math.PI*2); ctx.fill();
-    } else if (e.type === "TOY") {
-      ctx.fillStyle = "#3a2f3f";
-      ctx.beginPath(); ctx.roundRect(-16,-12,32,24,10); ctx.fill(); ctx.stroke();
-      ctx.lineWidth = 3;
-      ctx.strokeStyle="#c1c7d6";
-      ctx.beginPath();
-      for (let i=0;i<6;i++) ctx.lineTo(-10 + i*4, -12 + (i%2? -2: 2));
-      ctx.stroke();
-      ctx.fillStyle="#e8a0a0";
-      ctx.beginPath(); ctx.arc(6,2,2.5,0,Math.PI*2); ctx.fill();
-    } else if (e.type === "VAC") {
-      ctx.fillStyle = "#2a3b4a";
-      ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle="#0f1420";
-      ctx.beginPath(); ctx.arc(0,0,8,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle="#ff6b6b";
-      ctx.beginPath(); ctx.arc(8,-6,3,0,Math.PI*2); ctx.fill();
-    }
-    ctx.restore();
-  }
+  requestAnimationFrame(loop);
+}
 
-  function drawItem(it) {
-    ctx.save();
-    ctx.translate(it.x, it.y);
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = "#0d0f14";
-    ctx.fillStyle = it.type === "SHIELD" ? "rgba(102,194,255,0.9)" : "rgba(255,189,102,0.9)";
-    ctx.beginPath(); ctx.roundRect(-14,-14,28,28,10); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "#0b0b0f";
-    ctx.font = "900 12px system-ui";
-    ctx.textAlign="center";
-    ctx.fillText(it.type === "SHIELD" ? "S" : "P", 0, 5);
-    ctx.restore();
-    ctx.textAlign="left";
-  }
-
-  function drawBoss() {
-    if (!boss.active) return;
-    ctx.save();
-    ctx.translate(boss.x, boss.y);
-    ctx.lineWidth = 8;
-    ctx.strokeStyle = "#0d0f14";
-    ctx.fillStyle = "#264054";
-    ctx.beginPath(); ctx.arc(0,0,boss.r,0,Math.PI*2); ctx.fill(); ctx.stroke();
-
-    ctx.lineWidth = 10;
-    ctx.strokeStyle = "#1a2b3b";
-    ctx.beginPath(); ctx.arc(0,0,boss.r-18,0,Math.PI*2); ctx.stroke();
-
-    const t = now()*0.004;
-    for (let i=0;i<6;i++){
-      const ang = t + i*(Math.PI*2/6);
-      const x = Math.cos(ang)*(boss.r-30);
-      const y = Math.sin(ang)*(boss.r-30);
-      ctx.fillStyle = i%2? "#ffbd66" : "#ff6b6b";
-      ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
-    }
-
-    // nozzle (down)
-    ctx.fillStyle="#152335";
-    ctx.beginPath(); ctx.roundRect(-22, boss.r-10, 44, 18, 8); ctx.fill(); ctx.stroke();
-    ctx.restore();
-  }
-
-  // ====== Combat ======
-  function circleHit(ax,ay,ar, bx,by,br){
-    const dx=ax-bx, dy=ay-by;
-    return (dx*dx+dy*dy) <= (ar+br)*(ar+br);
-  }
-
-  function fireAuto(dt) {
-    // always firing in play/fight
-    player.fireCD = Math.max(0, player.fireCD - dt);
-    if (player.fireCD > 0) return;
-
-    const isLuca = player.char === "LUCA";
-    if (isLuca && player.overheat >= 1) return;
-
-    const speed = isLuca ? 650 : 600;
-    const dmg   = isLuca ? 12  : 10;
-    const spread = isLuca ? 0.10 : 0.05;
-
-    bullets.push({
-      x: player.x,
-      y: player.y - player.r - 10,
-      vx: rand(-1,1) * spread * 120,
-      vy: -speed,
-      r: 4,
-      dmg,
-      t:0,
-      life: 1.6
-    });
-
-    addParticle(player.x, player.y-26, 4, 0.7);
-    player.fireCD = isLuca ? 0.10 : 0.14;
-    if (isLuca) player.overheat = clamp(player.overheat + 0.07, 0, 1.2);
-  }
-
-  function hurtPlayer(amount) {
-    if (player.invuln > 0) return;
-    let dmg = amount;
-
-    if (player.shield > 0) {
-      const s = Math.min(player.shield, dmg);
-      player.shield -= s;
-      dmg -= s;
-    }
-    if (dmg > 0) player.hp -= dmg;
-
-    player.invuln = 0.55;
-    screenShake = Math.max(screenShake, 10);
-    glitch = Math.max(glitch, 0.9);
-
-    if (player.hp <= 0) {
-      player.hp = 0;
-      state = State.lose; stateT = 0;
-    }
-  }
-
-  function addScore(base) {
-    player.score += base * player.chain;
-    player.chain = clamp(player.chain + 1, 1, 9);
-  }
-
-  function hitEnemy(e, dmg) {
-    e.hp -= dmg;
-    addParticle(e.x, e.y, 6, 0.8);
-    if (e.hp <= 0) {
-      addScore(120);
-      // item drop chance
-      if (Math.random() < 0.12) {
-        items.push({
-          type: Math.random() < 0.6 ? "SHIELD" : "POWER",
-          x: e.x, y: e.y,
-          vy: rand(120, 200),
-          r: 14
-        });
-      }
-      const idx = enemies.indexOf(e);
-      if (idx >= 0) enemies.splice(idx, 1);
-      addParticle(e.x, e.y, 16, 1.2);
-    }
-  }
-
-  function hitBoss(dmg) {
-    boss.hp -= dmg;
-    addParticle(boss.x, boss.y, 10, 0.9);
-    if (boss.hp <= 0) {
-      boss.hp = 0;
-      state = State.win; stateT = 0;
-      addParticle(boss.x, boss.y, 70, 1.4);
-      screenShake = Math.max(screenShake, 18);
-    }
-  }
-
-  // ====== Spawning (top -> down) ======
-  function spawnEnemy(type) {
-    const x = rand(50, LOG_W-50);
-    const y = -30;
-    const e = { type, x, y, vx: rand(-40,40), vy: rand(120,220), r: 16, hp: 24, t:0 };
-    if (type==="DRONE") { e.r=14; e.hp=18; e.vy = rand(140,240); }
-    if (type==="TOY")   { e.r=16; e.hp=22; e.vy = rand(130,220); e.vx = rand(-70,70); }
-    if (type==="VAC")   { e.r=22; e.hp=46; e.vy = rand(110,180); e.vx = rand(-30,30); }
-    enemies.push(e);
-  }
-
-  function spawnBoss() {
-    boss.active = true;
-    boss.x = LOG_W/2;
-    boss.y = -160;
-    boss.hp = boss.maxHP;
-    boss.phase = 0;
-    boss.timer = 0;
-  }
-
-  // ====== HUD (portrait-friendly, minimal) ======
-  function roundPanel(x,y,w,h,r){
-    ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill();
-    ctx.strokeStyle="rgba(42,49,67,0.95)";
-    ctx.lineWidth=1; ctx.stroke();
-  }
-
-  function drawPillBar(x,y,w,h, ratio, fg, bg, label){
-    ctx.save();
-    ctx.fillStyle="rgba(12,16,28,0.55)";
-    roundPanel(x-8,y-8,w+16,h+24,14);
-    ctx.fillStyle="rgba(232,242,255,0.9)";
-    ctx.font="12px system-ui";
-    ctx.globalAlpha=0.9;
-    ctx.fillText(label, x, y+2);
-    ctx.globalAlpha=1;
-    ctx.fillStyle=bg;
-    ctx.beginPath(); ctx.roundRect(x, y+8, w, h, 999); ctx.fill();
-    ctx.fillStyle=fg;
-    ctx.beginPath(); ctx.roundRect(x, y+8, w*clamp(ratio,0,1), h, 999); ctx.fill();
-    ctx.restore();
-  }
-
-  function drawDottedBar(x,y,w,h, ratio, fg, bg, label){
-    ctx.save();
-    ctx.fillStyle="rgba(12,16,28,0.55)";
-    roundPanel(x-8,y-8,w+16,h+24,14);
-    ctx.fillStyle="rgba(232,242,255,0.9)";
-    ctx.font="12px system-ui";
-    ctx.globalAlpha=0.9;
-    ctx.fillText(label, x, y+2);
-    ctx.globalAlpha=1;
-
-    ctx.fillStyle=bg;
-    ctx.beginPath(); ctx.roundRect(x, y+8, w, h, 999); ctx.fill();
-
-    const filled = w*clamp(ratio,0,1);
-    ctx.fillStyle=fg;
-    const dotW=8,gap=5;
-    let dx=x+4;
-    while(dx < x+filled-2){
-      ctx.beginPath(); ctx.roundRect(dx, y+11, dotW, h-6, 4); ctx.fill();
-      dx += dotW+gap;
-    }
-    ctx.restore();
-  }
-
-  function drawCharBadge() {
-    // small badge right-top under buttons area
-    const x = LOG_W - 140;
-    const y = 78;
-    ctx.save();
-    ctx.fillStyle="rgba(12,16,28,0.55)";
-    roundPanel(x, y, 124, 34, 14);
-    ctx.fillStyle="rgba(232,242,255,0.92)";
-    ctx.font="900 12px system-ui";
-    ctx.fillText(player.char === "LUCA" ? "LUCA" : "MARCA", x+12, y+22);
-
-    // Luca overheat tiny
-    if (player.char === "LUCA") {
-      const r = clamp(player.overheat,0,1);
-      ctx.fillStyle="rgba(255,189,102,0.95)";
-      ctx.fillRect(x+64, y+12, Math.floor(48*r), 10);
-      ctx.strokeStyle="rgba(255,255,255,0.15)";
-      ctx.strokeRect(x+64, y+12, 48, 10);
-    } else {
-      ctx.fillStyle="rgba(166,255,176,0.95)";
-      ctx.fillRect(x+64, y+12, 48, 10);
-      ctx.strokeStyle="rgba(255,255,255,0.15)";
-      ctx.strokeRect(x+64, y+12, 48, 10);
-    }
-    ctx.restore();
-  }
-
-  function drawBossBar() {
-    const barW = 420, barH = 18;
-    const x = (LOG_W - barW)/2, y = 74;
-    const p = clamp(boss.hp/boss.maxHP,0,1);
-
-    ctx.save();
-    ctx.fillStyle="rgba(12,16,28,0.62)";
-    roundPanel(x-10,y-10,barW+20,barH+38,14);
-
-    ctx.fillStyle="rgba(232,242,255,0.9)";
-    ctx.font="12px system-ui";
-    ctx.globalAlpha=0.9;
-    ctx.fillText("CLEANING PROGRESS", x, y+12);
-    ctx.globalAlpha=1;
-
-    ctx.fillStyle="#1a2032";
-    ctx.beginPath(); ctx.roundRect(x,y+18,barW,barH,8); ctx.fill();
-
-    ctx.fillStyle="rgba(255,189,102,0.95)";
-    ctx.beginPath(); ctx.roundRect(x,y+18,barW*p,barH,8); ctx.fill();
-
-    ctx.fillStyle="rgba(232,242,255,0.85)";
-    ctx.fillText(`${Math.floor(p*100)}%`, x+barW-42, y+33);
-    ctx.restore();
-  }
-
-  function drawHUD() {
-    const pad = 12;
-    drawPillBar(pad, pad, 220, 16, player.hp/player.maxHP, "rgba(227,107,107,0.95)", "rgba(43,27,29,0.9)", "HP");
-    drawDottedBar(pad, pad+44, 220, 16, player.shield/player.maxShield, "rgba(102,194,255,0.95)", "rgba(21,32,50,0.9)", "SHIELD");
-
-    // DATA bottom-left (minimal)
-    ctx.save();
-    ctx.fillStyle="rgba(12,16,28,0.52)";
-    roundPanel(pad, LOG_H - 56, 240, 44, 14);
-    ctx.fillStyle="rgba(232,242,255,0.9)";
-    ctx.font="12px system-ui";
-    ctx.globalAlpha=0.9;
-    ctx.fillText(`DATA : ${String(Math.floor(player.score)).padStart(8,"0")}`, pad+12, LOG_H-32);
-    ctx.fillText(`CHAIN : x${player.chain}`, pad+12, LOG_H-14);
-    ctx.restore();
-
-    drawCharBadge();
-
-    if (boss.active && (state === State.bossFight || state === State.bossIntro)) drawBossBar();
-
-    // low hp warning (portrait)
-    if ((state === State.play || state === State.bossFight) && player.hp/player.maxHP <= 0.30) {
-      ctx.save();
-      ctx.globalAlpha = 0.16 + 0.12*Math.sin(now()*0.01);
-      ctx.strokeStyle = "rgba(255,90,90,0.9)";
-      ctx.lineWidth = 10;
-      ctx.strokeRect(8,8,LOG_W-16,LOG_H-16);
-      ctx.globalAlpha = 0.92;
-      ctx.fillStyle = "rgba(255,123,123,0.95)";
-      ctx.font = "12px system-ui";
-      ctx.fillText("WARNING  SUBJECT STABILITY DROPPING", 18, LOG_H-74);
-      ctx.restore();
-    }
-  }
-
-  function drawOverlayWarning() {
-    ctx.save();
-    ctx.globalAlpha = 0.18 + 0.10*Math.sin(now()*0.015);
-    ctx.fillStyle = "rgba(255,59,59,0.95)";
-    ctx.fillRect(0,0,LOG_W,LOG_H);
-    ctx.globalAlpha = 0.95;
-    ctx.fillStyle = "#0b0b0f";
-    ctx.textAlign = "center";
-    ctx.font = "900 34px system-ui";
-    ctx.fillText("⚠ WARNING ⚠", LOG_W/2, LOG_H/2 - 40);
-    ctx.font = "700 16px system-ui";
-    ctx.fillText("AUTONOMOUS UNIT ACTIVATED", LOG_W/2, LOG_H/2);
-    ctx.font = "600 12px system-ui";
-    ctx.globalAlpha = 0.9;
-    ctx.fillText("UNREGISTERED DEVICE DETECTED", LOG_W/2, LOG_H/2 + 34);
-    ctx.restore();
-    ctx.textAlign = "left";
-  }
-
-  function drawOverlayBossIntro() {
-    ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.55)";
-    ctx.fillRect(0,0,LOG_W,LOG_H);
-
-    const lines = ["OBJECT : CLEANING UNIT - XL","ORIGIN : HUMAN FACILITY","STATUS : HOSTILE"];
-    const t = stateT;
-    const maxChars = Math.floor(t * 44);
-    const full = lines.join("\n");
-    const shown = full.slice(0, maxChars);
-    const parts = shown.split("\n");
-
-    ctx.fillStyle = "rgba(232,242,255,0.95)";
-    ctx.textAlign="center";
-    ctx.font="900 18px system-ui";
-    for (let i=0;i<parts.length;i++){
-      ctx.fillText(parts[i], LOG_W/2, LOG_H*0.46 + i*26);
-    }
-    ctx.globalAlpha=0.85;
-    ctx.font="700 12px system-ui";
-    ctx.fillText("— START EXPERIMENT —", LOG_W/2, LOG_H*0.46 + 94);
-
-    ctx.restore();
-    ctx.textAlign="left";
-  }
-
-  function drawCenterCard(title, subtitle) {
-    ctx.save();
-    ctx.fillStyle="rgba(0,0,0,0.45)";
-    ctx.fillRect(0,0,LOG_W,LOG_H);
-    ctx.fillStyle="rgba(232,242,255,0.95)";
-    ctx.textAlign="center";
-    ctx.font="950 28px system-ui";
-    ctx.fillText(title, LOG_W/2, LOG_H/2 - 20);
-    ctx.font="650 13px system-ui";
-    ctx.globalAlpha=0.9;
-    ctx.fillText(subtitle, LOG_W/2, LOG_H/2 + 18);
-    ctx.restore();
-    ctx.textAlign="left";
-  }
-
-  // ====== Loop ======
-  let last = now();
-  function tick() {
-    const t = now();
-    let dt = (t - last) / 1000;
-    last = t;
-    dt = Math.min(dt, 0.033);
-
-    stateT += dt;
-    screenShake = Math.max(0, screenShake - 30*dt);
-    glitch = Math.max(0, glitch - 1.2*dt);
-
-    // camera shake
-    let camX=0, camY=0;
-    if (screenShake > 0) {
-      camX = rand(-1,1)*screenShake*0.7;
-      camY = rand(-1,1)*screenShake*0.9;
-    }
-
-    // State transitions
-    if (state === State.play && !boss.active) {
-      // spawn enemies & items
-      const spawnRate = 1.25; // per sec
-      if (Math.random() < spawnRate * dt) {
-        const r = Math.random();
-        if (r < 0.48) spawnEnemy("DRONE");
-        else if (r < 0.82) spawnEnemy("TOY");
-        else spawnEnemy("VAC");
-      }
-
-      // boss trigger
-      if (stateT > 26) {
-        state = State.warning; stateT = 0;
-        enemies.splice(0, Math.max(0, enemies.length - 7));
-      }
-    }
-    if (state === State.warning) {
-      if (stateT > 1.5) {
-        state = State.bossIntro; stateT = 0;
-        spawnBoss();
-      }
-    }
-    if (state === State.bossIntro) {
-      if (stateT > 2.1) {
-        state = State.bossFight; stateT = 0;
-      }
-    }
-
-    const activePlay = (state === State.play || state === State.bossFight);
-
-    // Update player
-    if (activePlay) {
-      // follow drag position (smooth)
-      if (touch.active) {
-        const tx = clamp(touch.x, 50, LOG_W-50);
-        const ty = clamp(touch.y, LOG_H*0.45, LOG_H-70); // keep in lower half
-        player.x = lerp(player.x, tx, 0.24);
-        player.y = lerp(player.y, ty, 0.24);
-      }
-
-      // passive regen for MARCA
-      if (player.char === "MARCA") {
-        player.shield = clamp(player.shield + 5*dt, 0, player.maxShield);
-      } else {
-        player.overheat = Math.max(0, player.overheat - 0.45*dt);
-      }
-
-      player.invuln = Math.max(0, player.invuln - dt);
-
-      // auto fire
-      fireAuto(dt);
-
-      // chain decay slight
-      if (Math.random() < 0.22*dt) player.chain = Math.max(1, player.chain - 1);
-    }
-
-    // Update bullets
-    for (let i=bullets.length-1;i>=0;i--){
-      const b = bullets[i];
-      b.t += dt;
-      b.x += b.vx*dt;
-      b.y += b.vy*dt;
-      if (b.t > b.life || b.y < -80 || b.x < -80 || b.x > LOG_W+80) bullets.splice(i,1);
-    }
-
-    // Update enemies
-    for (let i=enemies.length-1;i>=0;i--){
-      const e = enemies[i];
-      e.t += dt;
-      e.x += e.vx*dt;
-      e.y += e.vy*dt;
-
-      // enemy shooting downward
-      if (activePlay && e.y > 90 && Math.random() < 0.40*dt) {
-        const dx = player.x - e.x;
-        const dy = player.y - e.y;
-        const d = Math.hypot(dx,dy) || 1;
-        eBullets.push({
-          x: e.x, y: e.y + e.r + 8,
-          vx: (dx/d)*120,
-          vy: (dy/d)*260,
-          r: 4.5, dmg: 10, t:0, life: 3.0
-        });
-      }
-
-      if (e.y > LOG_H + 60) enemies.splice(i,1);
-    }
-
-    // Update items
-    for (let i=items.length-1;i>=0;i--){
-      const it = items[i];
-      it.y += it.vy*dt;
-      if (it.y > LOG_H+50) items.splice(i,1);
-    }
-
-    // Update enemy bullets
-    for (let i=eBullets.length-1;i>=0;i--){
-      const b = eBullets[i];
-      b.t += dt;
-      b.x += b.vx*dt;
-      b.y += b.vy*dt;
-      if (b.t > b.life || b.y > LOG_H+80 || b.x < -80 || b.x > LOG_W+80) eBullets.splice(i,1);
-    }
-
-    // Boss update (top -> down entry then hover)
-    if (boss.active && (state === State.bossIntro || state === State.bossFight)) {
-      boss.timer += dt;
-
-      if (boss.y < 170) {
-        boss.y += boss.vy*dt;
-      } else {
-        boss.x = LOG_W/2 + Math.sin(boss.timer*0.8)*70;
-        boss.y = 170 + Math.sin(boss.timer*1.2)*16;
-      }
-
-      if (state === State.bossFight) {
-        const hpR = boss.hp / boss.maxHP;
-        boss.phase = (hpR < 0.33) ? 2 : (hpR < 0.66) ? 1 : 0;
-
-        // Patterns: aimed, fan, vacuum pull
-        if (boss.phase === 0 && Math.random() < 1.1*dt) bossAimed();
-        if (boss.phase === 1 && Math.random() < 1.3*dt) bossFan(6, 270);
-        if (boss.phase === 2) {
-          if (Math.random() < 1.5*dt) bossFan(8, 290);
-          // vacuum pull (downward suction)
-          const dx = boss.x - player.x;
-          const dy = boss.y - player.y;
-          const dist = Math.max(160, Math.hypot(dx,dy));
-          const pull = (95 / dist);
-          player.x += dx * pull * dt;
-          player.y += dy * pull * dt;
-        }
-      }
-    }
-
-    function bossAimed() {
-      const dx = player.x - boss.x;
-      const dy = player.y - boss.y;
-      const d = Math.hypot(dx,dy) || 1;
-      eBullets.push({ x: boss.x, y: boss.y + boss.r - 10, vx:(dx/d)*140, vy:(dy/d)*320, r:5.5, dmg:14, t:0, life:3.0 });
-    }
-    function bossFan(count=6, speed=270) {
-      const base = Math.atan2(player.y - boss.y, player.x - boss.x);
-      for (let i=0;i<count;i++){
-        const ang = base + (i-(count-1)/2)*0.18;
-        eBullets.push({ x: boss.x, y: boss.y + boss.r - 10, vx:Math.cos(ang)*speed*0.45, vy:Math.sin(ang)*speed, r:4.8, dmg:12, t:0, life:3.2 });
-      }
-    }
-
-    // Particles
-    for (let i=particles.length-1;i>=0;i--){
-      const p = particles[i];
-      p.t += dt;
-      p.x += p.vx*dt;
-      p.y += p.vy*dt;
-      p.vx *= (1 - 2.2*dt);
-      p.vy *= (1 - 2.2*dt);
-      if (p.t > p.life) particles.splice(i,1);
-    }
-
-    // Collisions
-    if (activePlay) {
-      // bullets vs enemies/boss
-      for (let i=bullets.length-1;i>=0;i--){
-        const b = bullets[i];
-        let hit = false;
-
-        for (let j=enemies.length-1;j>=0;j--){
-          const e = enemies[j];
-          if (circleHit(b.x,b.y,b.r, e.x,e.y,e.r)) {
-            hitEnemy(e, b.dmg);
-            hit = true;
-            break;
-          }
-        }
-        if (!hit && boss.active && state === State.bossFight && circleHit(b.x,b.y,b.r, boss.x,boss.y,boss.r)) {
-          hitBoss(b.dmg);
-          hit = true;
-        }
-        if (hit) bullets.splice(i,1);
-      }
-
-      // enemy bullets vs player
-      for (let i=eBullets.length-1;i>=0;i--){
-        const b = eBullets[i];
-        if (circleHit(b.x,b.y,b.r, player.x,player.y,player.r)) {
-          hurtPlayer(b.dmg);
-          addParticle(b.x,b.y, 12, 0.9);
-          eBullets.splice(i,1);
-        }
-      }
-
-      // enemies collide with player
-      for (let i=enemies.length-1;i>=0;i--){
-        const e = enemies[i];
-        if (circleHit(e.x,e.y,e.r, player.x,player.y,player.r)) {
-          hurtPlayer(e.type==="VAC"?22:16);
-          addParticle(e.x,e.y, 18, 1.0);
-          enemies.splice(i,1);
-        }
-      }
-
-      // items pickup
-      for (let i=items.length-1;i>=0;i--){
-        const it = items[i];
-        if (circleHit(it.x,it.y,it.r, player.x,player.y,player.r)) {
-          if (it.type === "SHIELD") player.shield = clamp(player.shield + 22, 0, player.maxShield);
-          if (it.type === "POWER")  player.score += 600;
-          addParticle(it.x,it.y, 20, 1.1);
-          items.splice(i,1);
-        }
-      }
-    }
-
-    // ====== Render ======
-    beginFrame();
-
-    // apply shake via transform offset in logical coords
-    ctx.save();
-    ctx.translate(camX, camY);
-
-    drawBackground(dt);
-
-    // draw bullets (player)
-    for (const b of bullets) {
-      ctx.fillStyle = "rgba(232,242,255,0.95)";
-      ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
-    }
-
-    // draw enemy bullets
-    for (const b of eBullets) {
-      ctx.fillStyle = "rgba(255,189,102,0.95)";
-      ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
-    }
-
-    // enemies
-    for (const e of enemies) drawEnemy(e);
-
-    // items
-    for (const it of items) drawItem(it);
-
-    // boss
-    drawBoss();
-
-    // player (invuln blink)
-    if (!(player.invuln > 0 && (Math.floor(now()*0.02)%2===0))) {
-      const imgLuca = new Image();
-      
-      imgLuca.src = "luca.png";
-
-      const imgMarca = new Image();
-      imgMarca.src = "marca.png";
-
-      function drawPlayer() {
-        const img = player.char === "LUCA" ? imgLuca : imgMarca;
-        ctx.drawImage(
-          img,
-          player.x - size/2,
-          player.y - size/2,
-          size,
-          size
-        );
-      }
-    }
-
-    // particles
-    for (const p of particles) {
-      const a = 1 - (p.t/p.life);
-      ctx.globalAlpha = a*0.9;
-      ctx.fillStyle = "rgba(207,231,255,0.95)";
-      ctx.fillRect(p.x, p.y, p.s, p.s);
-      ctx.globalAlpha = 1;
-    }
-
-    ctx.restore();
-
-    // HUD on top (no shake)
-    drawHUD();
-
-    // overlays
-    if (state === State.warning) drawOverlayWarning();
-    if (state === State.bossIntro) drawOverlayBossIntro();
-    if (state === State.win)  drawCenterCard("CLEANING FAILED", "LOG #01 — NEUTRALIZED · RESTART로 다시");
-    if (state === State.lose) drawCenterCard("EXPERIMENT FAILED", "SUBJECT STABILITY DROPPING · RESTART로 다시");
-
-    // boss spawn timing: after warning+intro, ensure boss active already
-    if ((state === State.play) && !boss.active && stateT > 0 && stateT < 0.2) {
-      // no-op
-    }
-    if (state === State.bossFight && !boss.active) spawnBoss();
-
-    requestAnimationFrame(tick);
-  }
-
-  resetGame();
-  requestAnimationFrame(tick);
-})();
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
