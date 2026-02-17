@@ -1114,7 +1114,23 @@
 
     // player (invuln blink)
     if (!(player.invuln > 0 && (Math.floor(now()*0.02)%2===0))) {
-      drawCatShip(player.x, player.y, player.char);
+      const imgLuca = new Image();
+      
+      imgLuca.src = "luca.png";
+
+      const imgMarca = new Image();
+      imgMarca.src = "marca.png";
+
+      function drawPlayer() {
+        const img = player.char === "LUCA" ? imgLuca : imgMarca;
+        ctx.drawImage(
+          img,
+          player.x - size/2,
+          player.y - size/2,
+          size,
+          size
+        );
+      }
     }
 
     // particles
@@ -1152,3 +1168,4 @@
 </script>
 </body>
 </html>
+
