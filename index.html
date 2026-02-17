@@ -66,9 +66,29 @@
   addEventListener("resize", resize);
   resize();
 
-  function beginFrame(){
-    ctx.setTransform(canvas.width/LOG_W, 0, 0, canvas.height/LOG_H, 0, 0);
-  }
+  function beginFrame() {
+  // 화면 비율 유지 스케일
+  const scale = Math.min(
+    canvas.width / LOG_W,
+    canvas.height / LOG_H
+  );
+
+  const offsetX = (canvas.width  - LOG_W * scale) / 2;
+  const offsetY = (canvas.height - LOG_H * scale) / 2;
+
+  ctx.setTransform(
+    scale, 0,
+    0, scale,
+    offsetX, offsetY
+  );
+
+  // 여백 영역 클리어 (검은 레터박스)
+  ctx.save();
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.restore();
+}
 
   // ====== images ======
   const imgLuca = new Image();
@@ -227,4 +247,5 @@
 </script>
 </body>
 </html>
+
 
