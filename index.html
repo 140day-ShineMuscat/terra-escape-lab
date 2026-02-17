@@ -33,6 +33,7 @@ canvas {
   display: flex;
   justify-content: space-between;
   pointer-events: none;
+  z-index: 5;
 }
 .btn {
   pointer-events: auto;
@@ -44,10 +45,12 @@ canvas {
   font-weight: 800;
   font-size: 12px;
   user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
 }
 .btn:active { transform: translateY(1px); }
 
-/* 시작 안내 */
+/* 시작 안내 레이어 */
 .startLayer {
   position: absolute;
   inset: 0;
@@ -55,6 +58,8 @@ canvas {
   align-items: center;
   justify-content: center;
   background: rgba(0,0,0,0.45);
+  z-index: 10;               /* 캔버스 위 */
+  touch-action: none;
 }
 .card {
   background: rgba(0,0,0,0.55);
@@ -63,6 +68,7 @@ canvas {
   padding: 18px;
   text-align: center;
   color: #e8f2ff;
+  width: min(420px, 90vw);
 }
 .card h1 {
   font-size: 18px;
@@ -72,6 +78,7 @@ canvas {
   font-size: 13px;
   margin: 0;
   opacity: 0.85;
+  line-height: 1.35;
 }
 .logo {
   margin-top: 10px;
@@ -94,7 +101,7 @@ canvas {
 <div class="startLayer" id="startLayer">
   <div class="card">
     <h1>루카와 마르카 : 지구탈출연구실</h1>
-    <p>세로 슈팅 · 드래그 이동 · 자동 발사</p>
+    <p>세로 슈팅 · 드래그 이동 · 자동 발사<br/>화면을 터치하면 시작</p>
     <div class="logo">TERRA ESCAPE LAB</div>
   </div>
 </div>
@@ -105,14 +112,14 @@ const LOG_W = 540;
 const LOG_H = 960;
 
 const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("2d", { alpha: false });
 
 function resize() {
   const dpr = Math.max(1, window.devicePixelRatio || 1);
-  canvas.width = innerWidth * dpr;
-  canvas.height = innerHeight * dpr;
+  canvas.width = Math.floor(innerWidth * dpr);
+  canvas.height = Math.floor(innerHeight * dpr);
 }
-window.addEventListener("resize", resize);
+addEventListener("resize", resize);
 resize();
 
 function beginFrame() {
@@ -133,114 +140,170 @@ imgLuca.src = "assets/luca.png";
 const imgMarca = new Image();
 imgMarca.src = "assets/marca.png";
 
-/* ================== 게임 상태 ================== */
-let state = "TITLE";
+/* ================== 상태 ================== */
+const State = { TITLE:"TITLE", PLAY:"PLAY" };
+let state = State.TITLE;
 
 /* ================== 플레이어 ================== */
 const player = {
   x: LOG_W/2,
   y: LOG_H*0.8,
-  r: 18,
+  r: 18,           // 판정 반지름(그림과 별개)
   char: "LUCA",
-  hp: 100,
 };
 
-/* ================== 입력 (드래그 이동) ================== */
-let dragging = false;
-canvas.addEventListener("pointerdown", e => {
-  if (state === "TITLE") {
-    state = "PLAY";
-    document.getElementById("startLayer").style.display = "none";
-  }
-  dragging = true;
-});
-canvas.addEventListener("pointerup", ()=> dragging=false);
-canvas.addEventListener("pointercancel", ()=> dragging=false);
-canvas.addEventListener("pointermove", e => {
-  if (!dragging) return;
-  const rect = canvas.getBoundingClientRect();
-  const nx = (e.clientX - rect.left) / rect.width;
-  const ny = (e.clientY - rect.top) / rect.height;
-  player.x = clamp(nx * LOG_W, 40, LOG_W-40);
-  player.y = clamp(ny * LOG_H, LOG_H*0.45, LOG_H-60);
-});
-
-/* ================== UI 버튼 ================== */
-document.getElementById("btnSwap").onclick = () => {
-  if (state !== "PLAY") return;
-  player.char = player.char === "LUCA" ? "MARCA" : "LUCA";
-};
-document.getElementById("btnRestart").onclick = () => {
-  location.reload();
-};
-
-/* ================== 총알 ================== */
 const bullets = [];
 let fireCD = 0;
 
+function resetGame() {
+  state = State.TITLE;
+  player.x = LOG_W/2;
+  player.y = LOG_H*0.8;
+  player.char = "LUCA";
+  bullets.length = 0;
+  fireCD = 0;
+  startLayer.style.display = "flex";
+}
+
+/* ================== 좌표 변환 ================== */
+function screenToLogical(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const nx = (clientX - rect.left) / rect.width;
+  const ny = (clientY - rect.top) / rect.height;
+  return { x: nx * LOG_W, y: ny * LOG_H };
+}
+
+/* ================== 입력(드래그 이동) ================== */
+let drag = { active:false, id:null, tx: player.x, ty: player.y };
+
+function startPlay() {
+  if (state === State.PLAY) return;
+  state = State.PLAY;
+  startLayer.style.display = "none";
+}
+
+function onPointerDown(e) {
+  e.preventDefault();
+  startPlay();
+  drag.active = true;
+  drag.id = e.pointerId;
+  canvas.setPointerCapture(e.pointerId);
+
+  const p = screenToLogical(e.clientX, e.clientY);
+  drag.tx = p.x; drag.ty = p.y;
+}
+
+function onPointerMove(e) {
+  if (!drag.active || e.pointerId !== drag.id) return;
+  e.preventDefault();
+  const p = screenToLogical(e.clientX, e.clientY);
+  drag.tx = p.x; drag.ty = p.y;
+}
+
+function onPointerUp(e) {
+  if (e.pointerId !== drag.id) return;
+  e.preventDefault();
+  drag.active = false;
+  drag.id = null;
+}
+
+canvas.addEventListener("pointerdown", onPointerDown, { passive:false });
+canvas.addEventListener("pointermove", onPointerMove, { passive:false });
+canvas.addEventListener("pointerup", onPointerUp, { passive:false });
+canvas.addEventListener("pointercancel", onPointerUp, { passive:false });
+
+/* ⭐ 핵심: startLayer(오버레이)도 눌러서 시작되게 */
+const startLayer = document.getElementById("startLayer");
+startLayer.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  startPlay();
+}, { passive:false });
+
+/* ================== UI 버튼 ================== */
+document.getElementById("btnSwap").addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  if (state !== State.PLAY) return;
+  player.char = (player.char === "LUCA") ? "MARCA" : "LUCA";
+}, { passive:false });
+
+document.getElementById("btnRestart").addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  resetGame();
+}, { passive:false });
+
+/* ================== 발사 ================== */
 function fire(dt) {
   fireCD -= dt;
   if (fireCD > 0) return;
+
   bullets.push({
     x: player.x,
-    y: player.y - 28,
-    vy: -720,
-    r: 4
+    y: player.y - 34,
+    vx: 0,
+    vy: -740,
+    r: 4,
+    t: 0,
+    life: 1.6
   });
   fireCD = 0.12;
 }
 
 /* ================== 그리기 ================== */
 function drawPlayer() {
-  const img = player.char === "LUCA" ? imgLuca : imgMarca;
-  const size = 72;
-  ctx.drawImage(
-    img,
-    player.x - size/2,
-    player.y - size/2,
-    size, size
-  );
+  const img = (player.char === "LUCA") ? imgLuca : imgMarca;
+  const size = 78; // <- 캐릭터 크기. 필요하면 64~96 사이로 조절
+  ctx.drawImage(img, player.x - size/2, player.y - size/2, size, size);
 }
 
-/* ================== 메인 루프 ================== */
+/* ================== 루프 ================== */
 let last = performance.now();
 function loop(t) {
-  const dt = Math.min(0.033, (t-last)/1000);
+  const dt = Math.min(0.033, (t - last) / 1000);
   last = t;
 
   beginFrame();
 
-  /* 배경 */
+  // 배경
   ctx.fillStyle = "#0f1220";
-  ctx.fillRect(0,0,LOG_W,LOG_H);
+  ctx.fillRect(0, 0, LOG_W, LOG_H);
 
-  if (state === "PLAY") {
+  // 플레이어 목표좌표로 부드럽게 이동
+  if (state === State.PLAY) {
+    const tx = clamp(drag.tx, 40, LOG_W - 40);
+    const ty = clamp(drag.ty, LOG_H*0.45, LOG_H - 60);
+    player.x = lerp(player.x, tx, 0.28);
+    player.y = lerp(player.y, ty, 0.28);
+
+    // 자동 발사
     fire(dt);
   }
 
-  /* 총알 업데이트 */
-  for (let i=bullets.length-1;i>=0;i--) {
+  // 총알 업데이트
+  for (let i = bullets.length - 1; i >= 0; i--) {
     const b = bullets[i];
+    b.t += dt;
+    b.x += b.vx * dt;
     b.y += b.vy * dt;
-    if (b.y < -40) bullets.splice(i,1);
+    if (b.t > b.life || b.y < -60) bullets.splice(i, 1);
   }
 
-  /* 총알 그리기 */
+  // 총알 그리기
   ctx.fillStyle = "#e8f2ff";
   for (const b of bullets) {
     ctx.beginPath();
-    ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  /* 플레이어 */
+  // 플레이어
   drawPlayer();
 
   requestAnimationFrame(loop);
 }
-
 requestAnimationFrame(loop);
+
+// 초기화
+resetGame();
 </script>
 </body>
 </html>
-
