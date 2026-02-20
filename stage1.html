@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>루카와 마르카 : 지구탈출연구실 - STAGE 1</title>
+
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    touch-action: none;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .topbar {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    top: max(10px, env(safe-area-inset-top));
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .btn {
+    pointer-events: auto;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: rgba(12,16,28,0.65);
+    border: 1px solid rgba(42,49,67,0.9);
+    color: #e8f2ff;
+    font-weight: 900;
+    font-size: 12px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+
+  .btn:active {
+    transform: translateY(1px);
+  }
+
+  .startLayer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.45);
+    z-index: 20;
+    touch-action: none;
+  }
+
+  .card {
+    width: min(420px, 92vw);
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 18px;
+    padding: 18px 16px;
+    color: #e8f2ff;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .card .t {
+    font-weight: 950;
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  .card .s {
+    font-size: 13px;
+    opacity: 0.85;
+    line-height: 1.35;
+  }
+
+  .card .logo {
+    margin-top: 10px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: #76d2c8;
+    font-size: 13px;
+  }
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+
+<div class="topbar">
+  <div class="btn" id="btnSwap">SWAP (루카/마르카)</div>
+  <div class="btn" id="btnRestart">RESTART</div>
+</div>
+
+<div class="startLayer" id="startLayer">
+  <div class="card">
+    <div class="t">루카와 마르카 : 지구탈출연구실</div>
+    <div class="s">
+      STAGE 1 · 세로 슈팅 데모<br/>
+      드래그 이동 · 자동 발사
+    </div>
+    <div class="logo">TERRA ESCAPE LAB</div>
+  </div>
+</div>
+
+<!-- 게임 엔진 -->
+<script src="js/engine.js"></script>
+
+<!-- 스테이지 설정 -->
+<script src="js/stage1.js"></script>
+
+<!-- 게임 시작 -->
+<script>
+  // Stage1 로드 후 엔진 시작
+  TEL.start(Stage1);
+</script>
+
+</body>
+</html>
+
