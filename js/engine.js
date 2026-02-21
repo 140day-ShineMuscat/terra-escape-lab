@@ -1,21 +1,21 @@
-/* Terra Escape Lab - Engine (Stage-driven)
- * - Portrait 2:1 fixed logical resolution (360x720)
- * - Letterbox scaling (contain)
- * - Touch drag to move + auto fire
- * - Stage provides background + spawn rules + boss rules
+/* Terra Escape Lab - Engine (Stage-driven, Portrait 2:1)
+ * Features:
+ * - Enemies shoot missiles
+ * - Item drops + weapon upgrade per character
+ * - Score
+ * - Win overlay adds "Back to Stage Select" button -> index.html
  */
 (() => {
   const LOG_W = 360;
   const LOG_H = 720;
 
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const lerp = (a, b, t) => a + (b - a) * t;
-  const rand = (a, b) => a + Math.random() * (b - a);
+  const lerp  = (a, b, t) => a + (b - a) * t;
+  const rand  = (a, b) => a + Math.random() * (b - a);
 
   function imgReady(img) {
     return img && img.complete && img.naturalWidth > 0;
   }
-
   function loadSprites(map) {
     const out = {};
     for (const [key, src] of Object.entries(map || {})) {
@@ -25,17 +25,14 @@
     }
     return out;
   }
-
   function circleHit(ax, ay, ar, bx, by, br) {
     const dx = ax - bx, dy = ay - by;
     return dx * dx + dy * dy <= (ar + br) * (ar + br);
   }
-
   function drawSpriteCentered(ctx, img, x, y, size) {
     ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
   }
 
-  // Expose as global
   window.TEL = {
     start(stage) {
       // ---------- Canvas ----------
@@ -54,7 +51,6 @@
       resize();
 
       function beginFrame() {
-        // letterbox background
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.fillStyle = stage.letterboxColor || "#000";
@@ -72,16 +68,12 @@
         const rect = canvas.getBoundingClientRect();
         const px = (clientX - rect.left) / rect.width * canvas.width;
         const py = (clientY - rect.top) / rect.height * canvas.height;
-        return {
-          x: (px - view.offX) / view.scale,
-          y: (py - view.offY) / view.scale
-        };
+        return { x: (px - view.offX) / view.scale, y: (py - view.offY) / view.scale };
       }
 
       // ---------- Sprites ----------
       const sprites = loadSprites(stage.sprites);
-	window.__TEL_SPRITES__ = sprites;
-
+      window.__TEL_SPRITES__ = sprites; // (원하면 stage에서 접근 가능)
 
       // ---------- UI ----------
       const elStart = document.getElementById("startLayer");
@@ -97,18 +89,23 @@
       const player = {
         x: LOG_W / 2,
         y: LOG_H * 0.82,
-        char: "LUCA",  // or MARCA
+        char: "LUCA",
         hp: 100,
         r: 14,
-        inv: 0
+        inv: 0,
+        score: 0,
+        // 캐릭터별 업그레이드 레벨
+        weaponLv: { LUCA: 1, MARCA: 1 }
       };
       const drag = { active: false, id: null, tx: player.x, ty: player.y };
 
       // ---------- Entities ----------
-      const bullets = [];
-      const enemies = [];
+      const bullets = [];   // player bullets
+      const enemies = [];   // enemy units
+      const eBullets = [];  // enemy missiles
+      const items = [];     // drops
 
-      // Boss object lives always; stage decides when active
+      // Boss
       const boss = {
         active: false,
         x: LOG_W / 2,
@@ -120,6 +117,34 @@
         entered: false
       };
 
+      // ---------- Win Menu Button (auto-generate) ----------
+      let winMenuBtn = null;
+      function ensureWinMenuButton(show) {
+        if (!winMenuBtn) {
+          winMenuBtn = document.createElement("button");
+          winMenuBtn.textContent = "스테이지 선택으로";
+          winMenuBtn.style.position = "fixed";
+          winMenuBtn.style.left = "50%";
+          winMenuBtn.style.top = "62%";
+          winMenuBtn.style.transform = "translate(-50%, -50%)";
+          winMenuBtn.style.padding = "12px 16px";
+          winMenuBtn.style.borderRadius = "14px";
+          winMenuBtn.style.border = "1px solid rgba(42,49,67,0.9)";
+          winMenuBtn.style.background = "rgba(12,16,28,0.75)";
+          winMenuBtn.style.color = "#e8f2ff";
+          winMenuBtn.style.fontWeight = "900";
+          winMenuBtn.style.fontSize = "14px";
+          winMenuBtn.style.zIndex = "9999";
+          winMenuBtn.style.display = "none";
+          winMenuBtn.style.cursor = "pointer";
+          winMenuBtn.addEventListener("click", () => {
+            window.location.href = "index.html";
+          });
+          document.body.appendChild(winMenuBtn);
+        }
+        winMenuBtn.style.display = show ? "block" : "none";
+      }
+
       // ---------- Reset / Start ----------
       function resetGame() {
         stateNow = State.TITLE;
@@ -130,12 +155,17 @@
         player.char = "LUCA";
         player.hp = 100;
         player.inv = 0;
+        player.score = 0;
+        player.weaponLv.LUCA = 1;
+        player.weaponLv.MARCA = 1;
 
         drag.active = false; drag.id = null;
         drag.tx = player.x; drag.ty = player.y;
 
         bullets.length = 0;
         enemies.length = 0;
+        eBullets.length = 0;
+        items.length = 0;
 
         boss.active = false;
         boss.x = LOG_W / 2;
@@ -145,12 +175,14 @@
         boss.entered = false;
 
         if (elStart) elStart.style.display = "flex";
+        ensureWinMenuButton(false);
       }
 
       function startPlay() {
         if (stateNow !== State.TITLE) return;
         stateNow = State.PLAY;
         if (elStart) elStart.style.display = "none";
+        ensureWinMenuButton(false);
       }
 
       // ---------- Input ----------
@@ -175,13 +207,11 @@
         drag.active = false;
         drag.id = null;
       }
-
       canvas.addEventListener("pointerdown", onPointerDown, { passive: false });
       canvas.addEventListener("pointermove", onPointerMove, { passive: false });
       canvas.addEventListener("pointerup", onPointerUp, { passive: false });
       canvas.addEventListener("pointercancel", onPointerUp, { passive: false });
 
-      // iOS fallback
       function onTouch(e) {
         e.preventDefault();
         startPlay();
@@ -197,13 +227,11 @@
       canvas.addEventListener("touchcancel", onTouch, { passive: false });
       addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
 
-      // start overlay also starts
       if (elStart) {
         elStart.addEventListener("pointerdown", (e) => { e.preventDefault(); startPlay(); }, { passive: false });
         elStart.addEventListener("touchstart", (e) => { e.preventDefault(); startPlay(); }, { passive: false });
       }
 
-      // buttons
       if (btnSwap) {
         btnSwap.addEventListener("pointerdown", (e) => {
           e.preventDefault();
@@ -218,53 +246,100 @@
         }, { passive: false });
       }
 
-      // ---------- Fire ----------
+      // ---------- Fire (weapon upgrade) ----------
       let fireCD = 0;
+
+      function spawnPlayerBullet(x, y, vy, dmg) {
+        bullets.push({ x, y, vy, r: 3.2, dmg, life: 1.6, t: 0 });
+      }
+
       function fire(dt) {
         fireCD = Math.max(0, fireCD - dt);
         if (fireCD > 0) return;
 
         const isLuca = player.char === "LUCA";
-        bullets.push({
-          x: player.x,
-          y: player.y - 26,
-          vy: -760,
-          r: 3.2,
-          dmg: isLuca ? 12 : 10,
-          life: 1.6,
-          t: 0
-        });
+        const lv = clamp(player.weaponLv[player.char] ?? 1, 1, 3);
+
+        const baseDmg = isLuca ? 12 : 10;
+        const dmg = baseDmg + (lv - 1) * 3;
+
+        // 패턴: 1=단발, 2=2발, 3=3발(가로 확산)
+        if (lv === 1) {
+          spawnPlayerBullet(player.x, player.y - 26, -760, dmg);
+        } else if (lv === 2) {
+          spawnPlayerBullet(player.x - 10, player.y - 26, -760, dmg);
+          spawnPlayerBullet(player.x + 10, player.y - 26, -760, dmg);
+        } else {
+          spawnPlayerBullet(player.x - 16, player.y - 26, -760, dmg);
+          spawnPlayerBullet(player.x,      player.y - 26, -760, dmg);
+          spawnPlayerBullet(player.x + 16, player.y - 26, -760, dmg);
+        }
+
+        // Luca가 좀 더 빠르게
         fireCD = isLuca ? 0.11 : 0.14;
+      }
+
+      // ---------- Enemy missiles ----------
+      function maybeEnemyShoot(e, dt) {
+        e.shootCD = Math.max(0, (e.shootCD ?? 0) - dt);
+        if (e.shootCD > 0) return;
+
+        const cfg = stage.enemyShoot ?? { chancePerSec: 0.7, speed: [220, 320], interval: [0.8, 1.6] };
+        const chance = cfg.chancePerSec ?? 0.7;
+
+        // 화면에 들어온 뒤에만 쏘게
+        if (e.y < 40) return;
+
+        if (Math.random() < chance * dt) {
+          const sp = Array.isArray(cfg.speed) ? rand(cfg.speed[0], cfg.speed[1]) : cfg.speed;
+          eBullets.push({
+            x: e.x,
+            y: e.y + 18,
+            vy: sp,
+            r: 4.2,
+            dmg: 12
+          });
+          const [a, b] = cfg.interval ?? [0.8, 1.6];
+          e.shootCD = rand(a, b);
+        }
+      }
+
+      // ---------- Item drops / pickup ----------
+      function spawnUpgradeItem(x, y) {
+        items.push({
+          type: "UP",
+          x, y,
+          vy: 130,
+          r: 10
+        });
+      }
+
+      function applyUpgrade() {
+        const key = player.char; // 현재 캐릭터만 업그레이드
+        const cur = player.weaponLv[key] ?? 1;
+        player.weaponLv[key] = clamp(cur + 1, 1, 3);
       }
 
       // ---------- Spawn (stage-driven) ----------
       let spawnCD = 0;
-
       function spawnEnemyFromStage() {
-        const e = stage.spawnEnemy({
-          LOG_W, LOG_H,
-          rand, clamp
-        });
+        const e = stage.spawnEnemy({ LOG_W, LOG_H, rand, clamp });
         if (e) enemies.push(e);
       }
 
-      // ---------- Draw helpers ----------
+      // ---------- Draw ----------
       function drawBackground(dt) {
         stage.drawBackground(ctx, dt, {
-          LOG_W, LOG_H,
-          timeInPlay
+          LOG_W, LOG_H, timeInPlay, sprites
         });
       }
 
       function drawPlayer() {
         const img = (player.char === "LUCA") ? sprites.luca : sprites.marca;
         const size = stage.playerSize ?? 72;
-
         if (!imgReady(img)) {
           ctx.fillStyle = "rgba(232,242,255,0.9)";
-          ctx.beginPath();
-          ctx.arc(player.x, player.y, 22, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(player.x, player.y, 22, 0, Math.PI * 2); ctx.fill();
           return;
         }
         drawSpriteCentered(ctx, img, player.x, player.y, size);
@@ -273,12 +348,9 @@
       function drawEnemy(e) {
         const img = sprites.robo_blue;
         const size = stage.enemySize ?? 64;
-
         if (!imgReady(img)) {
           ctx.fillStyle = "rgba(80,160,255,0.95)";
-          ctx.beginPath();
-          ctx.arc(e.x, e.y, e.r + 6, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 6, 0, Math.PI * 2); ctx.fill();
           return;
         }
         drawSpriteCentered(ctx, img, e.x, e.y, size);
@@ -288,20 +360,33 @@
         if (!boss.active) return;
         const img = sprites.robo_red;
         const size = stage.boss?.size ?? 150;
-
         if (!imgReady(img)) {
           ctx.fillStyle = "rgba(255,90,90,0.95)";
-          ctx.beginPath();
-          ctx.arc(boss.x, boss.y, boss.r, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(boss.x, boss.y, boss.r, 0, Math.PI * 2); ctx.fill();
           return;
         }
         drawSpriteCentered(ctx, img, boss.x, boss.y, size);
       }
 
+      function drawItems() {
+        for (const it of items) {
+          // 단순 아이콘(원)
+          ctx.save();
+          ctx.fillStyle = "rgba(118,210,200,0.95)";
+          ctx.beginPath();
+          ctx.arc(it.x, it.y, 10, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(0,0,0,0.35)";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
       function drawHUD() {
-        // HP box
         ctx.save();
+
+        // HP
         ctx.fillStyle = "rgba(0,0,0,0.35)";
         ctx.fillRect(8, 8, 140, 34);
 
@@ -314,7 +399,21 @@
         ctx.strokeStyle = "rgba(255,255,255,0.2)";
         ctx.strokeRect(36, 14, 104, 10);
 
-        // boss bar
+        // SCORE (우상단)
+        ctx.textAlign = "right";
+        ctx.fillStyle = "rgba(232,242,255,0.95)";
+        ctx.font = "900 14px system-ui";
+        ctx.fillText(`SCORE ${player.score}`, LOG_W - 10, 24);
+        ctx.textAlign = "left";
+
+        // Weapon level 표시(아래쪽)
+        ctx.fillStyle = "rgba(232,242,255,0.8)";
+        ctx.font = "12px system-ui";
+        const lvL = player.weaponLv.LUCA ?? 1;
+        const lvM = player.weaponLv.MARCA ?? 1;
+        ctx.fillText(`LUCA LV.${lvL}  MARCA LV.${lvM}`, 10, LOG_H - 10);
+
+        // Boss bar
         if (boss.active) {
           const w = 260, h = 12;
           const x = (LOG_W - w) / 2;
@@ -329,14 +428,6 @@
           ctx.fillRect(x, y + 6, w * p, h);
           ctx.strokeStyle = "rgba(255,255,255,0.2)";
           ctx.strokeRect(x, y + 6, w, h);
-        }
-
-        // debug (원하면 stage.debug=false로 끄기)
-        if (stage.debug) {
-          ctx.fillStyle = "rgba(232,242,255,0.85)";
-          ctx.font = "11px system-ui";
-          ctx.fillText(`STATE: ${stateNow}`, 10, LOG_H - 30);
-          ctx.fillText(`ENEMIES: ${enemies.length}  TIME: ${timeInPlay.toFixed(1)}s`, 10, LOG_H - 14);
         }
 
         ctx.restore();
@@ -379,7 +470,7 @@
           }
         }
 
-        // update bullets
+        // update bullets (player)
         for (let i = bullets.length - 1; i >= 0; i--) {
           const b = bullets[i];
           b.t += dt;
@@ -391,20 +482,40 @@
         for (let i = enemies.length - 1; i >= 0; i--) {
           const e = enemies[i];
           e.y += e.vy * dt;
+
+          if (stateNow === State.PLAY) maybeEnemyShoot(e, dt);
+
           if (e.y > LOG_H + 60) enemies.splice(i, 1);
+        }
+
+        // update enemy missiles
+        for (let i = eBullets.length - 1; i >= 0; i--) {
+          const b = eBullets[i];
+          b.y += b.vy * dt;
+          if (b.y > LOG_H + 80) eBullets.splice(i, 1);
+        }
+
+        // update items
+        for (let i = items.length - 1; i >= 0; i--) {
+          const it = items[i];
+          it.y += it.vy * dt;
+          if (it.y > LOG_H + 40) items.splice(i, 1);
         }
 
         // update boss (stage-driven motion)
         if (boss.active) {
           boss.t += dt;
           stage.updateBoss(boss, dt, { LOG_W, LOG_H });
+
           if (boss.hp <= 0 && stateNow === State.PLAY) {
             boss.hp = 0;
             stateNow = State.WIN;
+            player.score += (stage.score?.bossKill ?? 500);
+            ensureWinMenuButton(true);
           }
         }
 
-        // collisions: bullets vs enemies/boss
+        // collisions: player bullets vs enemies/boss
         for (let i = bullets.length - 1; i >= 0; i--) {
           const b = bullets[i];
           let hit = false;
@@ -415,7 +526,18 @@
             if (circleHit(b.x, b.y, b.r, e.x, e.y, e.r)) {
               e.hp -= b.dmg;
               hit = true;
-              if (e.hp <= 0) enemies.splice(j, 1);
+
+              if (e.hp <= 0) {
+                // score
+                player.score += (stage.score?.enemyKill ?? 50);
+
+                // item drop
+                const drop = stage.itemDropChance ?? 0.25;
+                if (Math.random() < drop) {
+                  spawnUpgradeItem(e.x, e.y);
+                }
+                enemies.splice(j, 1);
+              }
               break;
             }
           }
@@ -429,11 +551,45 @@
           if (hit) bullets.splice(i, 1);
         }
 
-        // draw enemies / boss / bullets / player
+        // collisions: enemy missiles vs player
+        for (let i = eBullets.length - 1; i >= 0; i--) {
+          const b = eBullets[i];
+          if (circleHit(b.x, b.y, b.r, player.x, player.y, player.r)) {
+            player.hp -= (b.dmg ?? 10);
+            eBullets.splice(i, 1);
+            if (player.hp <= 0) {
+              player.hp = 0;
+              stateNow = State.LOSE;
+              ensureWinMenuButton(false);
+            }
+          }
+        }
+
+        // collisions: items pickup
+        for (let i = items.length - 1; i >= 0; i--) {
+          const it = items[i];
+          if (circleHit(it.x, it.y, it.r, player.x, player.y, player.r + 10)) {
+            if (it.type === "UP") applyUpgrade();
+            items.splice(i, 1);
+          }
+        }
+
+        // ---------- Draw entities ----------
         for (const e of enemies) drawEnemy(e);
         drawBoss();
 
-        // bullets
+        // items
+        drawItems();
+
+        // enemy missiles
+        ctx.fillStyle = "rgba(255,180,90,0.95)";
+        for (const b of eBullets) {
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // player bullets
         ctx.fillStyle = "rgba(232,242,255,0.95)";
         for (const b of bullets) {
           ctx.beginPath();
@@ -452,9 +608,9 @@
           ctx.fillStyle = "rgba(232,242,255,0.95)";
           ctx.textAlign = "center";
           ctx.font = "900 22px system-ui";
-          ctx.fillText("BOSS DOWN", LOG_W / 2, LOG_H / 2 - 10);
+          ctx.fillText("STAGE 1 CLEAR", LOG_W / 2, LOG_H / 2 - 22);
           ctx.font = "650 12px system-ui";
-          ctx.fillText("RESTART로 다시", LOG_W / 2, LOG_H / 2 + 16);
+          ctx.fillText("RESTART로 다시 / 버튼으로 스테이지 선택", LOG_W / 2, LOG_H / 2 + 6);
           ctx.restore();
           ctx.textAlign = "left";
         }
