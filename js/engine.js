@@ -17,7 +17,7 @@
       fish_can: "assets/fish_can.png" // 체력 회복
     },
 
-    playerSize: 72,
+    playerSize: 134,
     enemySize: 64,
 
     // 스테이지 템포
@@ -43,7 +43,7 @@
     boss: {
       name: "ROBO FATHER",
       appearAt: 18,
-      maxHP: 1200,
+      maxHP: 3000,
       size: 170
     },
 
@@ -72,7 +72,7 @@
         y: -60,
         vy: 70 + Math.random() * 40, // slow
         r: 16,
-        hp: 28,
+        hp: 42,
 
         // 좌우 흔들림
         weaveAmp: 36 + Math.random() * 22,
@@ -93,3 +93,4 @@
     }
   };
 })();
+
