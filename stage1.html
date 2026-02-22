@@ -13,25 +13,35 @@
   }
   canvas { position:absolute; inset:0; width:100vw; height:100vh; }
 
-  .topbar{
-    position:absolute; left:10px; right:10px;
-    top:max(10px, env(safe-area-inset-top));
-    display:flex; justify-content:space-between;
-    pointer-events:none;
-    z-index:10;
-  }
-  .btn{
-    pointer-events:auto;
-    padding:10px 14px;
-    border-radius:14px;
-    background: rgba(12,16,28,0.65);
-    border:1px solid rgba(42,49,67,0.9);
-    color:#e8f2ff;
-    font-weight:900;
-    font-size:12px;
-    user-select:none; -webkit-user-select:none;
-    touch-action:none;
-  }
+.topbar{
+  position:absolute;
+  left:10px; right:10px;
+
+  /* ✅ 위가 아니라 아래로 */
+  bottom:max(10px, env(safe-area-inset-bottom));
+  top:auto;
+
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+
+  pointer-events:none;
+  z-index:30; /* HUD 위/아래 조정용 */
+}
+.btn{
+  pointer-events:auto;
+  flex:1;               /* ✅ 버튼 3개가 균등하게 */
+  text-align:center;
+  padding:10px 12px;
+  border-radius:14px;
+  background: rgba(12,16,28,0.70);
+  border:1px solid rgba(42,49,67,0.9);
+  color:#e8f2ff;
+  font-weight:900;
+  font-size:12px;
+  user-select:none; -webkit-user-select:none;
+  touch-action:none;
+}
   .btn:active{ transform: translateY(1px); }
 
   .startLayer{
