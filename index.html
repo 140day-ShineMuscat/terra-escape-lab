@@ -2,62 +2,203 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
 <title>루카와 마르카 : 지구탈출연구실</title>
+
 <style>
-  html, body { margin:0; height:100%; background:#0b0b0f; color:#e8f2ff; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 24px; }
-  .title { font-size: 26px; font-weight: 950; letter-spacing: -0.2px; }
-  .sub { margin-top: 8px; opacity: 0.8; line-height: 1.4; }
-  .grid { margin-top: 18px; display:grid; grid-template-columns: 1fr; gap: 12px; }
-  .card {
-    display:flex; align-items:center; justify-content:space-between;
-    padding: 16px 14px;
-    border-radius: 16px;
-    background: rgba(12,16,28,0.65);
-    border: 1px solid rgba(42,49,67,0.9);
-    text-decoration:none; color:#e8f2ff;
-  }
-  .card:hover { border-color: rgba(118,210,200,0.7); }
-  .tag { font-size: 12px; opacity: 0.75; }
-  .go { font-weight: 900; color:#76d2c8; }
+:root{
+  --bg:#0b0b0f;
+  --panel:rgba(12,16,28,0.72);
+  --border:rgba(42,49,67,0.9);
+  --text:#e8f2ff;
+  --muted:rgba(232,242,255,0.6);
+  --accent:#76d2c8;
+  --lock:#ff6b6b;
+}
+
+html,body{
+  margin:0; padding:0;
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  overflow:hidden;
+}
+
+#app{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+}
+
+/* ---------- Title ---------- */
+.title{
+  text-align:center;
+}
+
+.logo-img{
+  width:200px;
+  height:auto;
+  margin:0 auto 10px;
+  display:block;
+}
+
+.title h1{
+  margin:0;
+  font-size:22px;
+  font-weight:900;
+}
+.title .sub{
+  margin-top:6px;
+  font-size:13px;
+  color:var(--muted);
+}
+.title .logo{
+  margin-top:8px;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:1px;
+  color:var(--accent);
+}
+
+/* ---------- Chapter Cards ---------- */
+.chapter-list{
+  width:min(420px,92vw);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.chapter{
+  position:relative;
+  padding:16px;
+  border-radius:18px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  backdrop-filter:blur(10px);
+  cursor:pointer;
+  user-select:none;
+}
+.chapter:active{ transform:translateY(2px); }
+
+.chapter h2{
+  margin:0;
+  font-size:16px;
+  font-weight:900;
+}
+.chapter p{
+  margin-top:6px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.chapter.open::after{
+  content:"OPEN";
+  position:absolute;
+  right:14px; top:14px;
+  font-size:11px;
+  font-weight:900;
+  color:var(--accent);
+}
+
+.chapter.lock{
+  opacity:.55;
+}
+.chapter.lock::after{
+  content:"LOCK";
+  position:absolute;
+  right:14px; top:14px;
+  font-size:11px;
+  font-weight:900;
+  color:var(--lock);
+}
+
+/* ---------- Lock Overlay ---------- */
+#lockOverlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:50;
+}
+.lockCard{
+  width:min(360px,90vw);
+  background:rgba(0,0,0,.65);
+  border-radius:18px;
+  padding:20px;
+  text-align:center;
+}
+.lockCard h3{
+  margin:0;
+  font-size:18px;
+  font-weight:900;
+  color:#ff7b7b;
+}
+.lockCard p{
+  margin-top:10px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.footer{
+  position:absolute;
+  bottom:14px;
+  font-size:11px;
+  color:var(--muted);
+}
 </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="title">루카와 마르카 : 지구탈출연구실</div>
-    <div class="sub">
-      달을 거쳐 화성에 가는 그날까지<br/>
-      아래에서 스테이지를 선택해 실행하세요.
+<div id="app">
+
+  <div class="title">
+    <!-- 🔬 연구실 로고 -->
+    <img src="assets/logo.png" class="logo-img" alt="Terra Escape Lab Logo">
+    <h1>루카와 마르카 : 지구탈출연구실</h1>
+    <div class="sub">Chapter Select</div>
+    <div class="logo">TERRA ESCAPE LAB</div>
+  </div>
+
+  <div class="chapter-list">
+    <div class="chapter open">
+      <h2>1장. 집</h2>
+      <p>탈출! 인간의 집</p>
     </div>
-
-    <div class="grid">
-      <a class="card" href="stage1.html">
-        <div>
-          <div style="font-weight:900;">STAGE 1 · 인간의 집</div>
-          <div class="tag">인간이 보낸 감시로봇(청소기)를 무찔러라</div>
-        </div>
-        <div class="go">PLAY →</div>
-      </a>
-
-      <!-- 앞으로 확장 -->
-      <a class="card" href="#" onclick="alert('Stage 2는 곧 추가!'); return false;">
-        <div>
-          <div style="font-weight:900;">STAGE 2 · 지구 자연</div>
-          <div class="tag">준비중</div>
-        </div>
-        <div class="go">LOCK</div>
-      </a>
-
-      <a class="card" href="#" onclick="alert('Stage 3는 곧 추가!'); return false;">
-        <div>
-          <div style="font-weight:900;">STAGE 3 · 달에 가는 길</div>
-          <div class="tag">준비중</div>
-        </div>
-        <div class="go">LOCK</div>
-      </a>
+    <div class="chapter lock">
+      <h2>2장. 지구</h2>
+      <p>우주 로켓 탈취 대작전! (준비중)</p>
+    </div>
+    <div class="chapter lock">
+      <h2>3장. 우주</h2>
+      <p>가자! 달과 화성으로 (준비중)</p>
     </div>
   </div>
+
+  <div class="footer">© Terra Escape Lab</div>
+</div>
+
+<div id="lockOverlay">
+  <div class="lockCard">
+    <h3>🔒 연구 데이터 부족</h3>
+    <p>해당 챕터는 준비 중입니다.</p>
+  </div>
+</div>
+
+<script>
+document.querySelector(".chapter.open").onclick = () => {
+  location.href = "stage_select_ch1.html";
+};
+document.querySelectorAll(".chapter.lock").forEach(el=>{
+  el.onclick = ()=>lockOverlay.style.display="flex";
+});
+lockOverlay.onclick = ()=>lockOverlay.style.display="none";
+</script>
+
 </body>
 </html>
-
