@@ -25,7 +25,7 @@
 
     dropRates: {
       gun: 0.15,
-      heal: 0.5
+      heal: 0.10
     },
     healAmount: 22,
 
@@ -83,3 +83,4 @@
     }
   };
 })();
+
