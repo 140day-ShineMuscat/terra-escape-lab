@@ -16,7 +16,7 @@
     },
 
     // ✅ 루카/마르카 크기 확대
-    playerSize: 168,
+    playerSize: 160,
     enemySize: 64,
 
     // ✅ 게임 템포 (원하면 더 늘릴 수 있음)
@@ -84,3 +84,57 @@
   };
 })();
 
+// ===== Stage1 Result Overlay =====
+function _fmtTime(sec){
+  sec = Math.max(0, Math.floor(sec));
+  const m = String(Math.floor(sec/60)).padStart(2,"0");
+  const s = String(sec%60).padStart(2,"0");
+  return `${m}:${s}`;
+}
+
+function Stage1_showResult({ success, score, timeSec, maxWeaponLv }) {
+  const root = document.getElementById("resultOverlay");
+  if (!root) return;
+
+  const title = success ? "✅ MISSION CLEAR" : "❌ MISSION FAILED";
+  const sub = success
+    ? "감시 로봇 제거 완료. 탈출로 확보."
+    : "실험 실패. 안정성 저하.";
+
+  root.innerHTML = `
+    <div class="card">
+      <div class="title">${title}</div>
+      <div class="sub">${sub}</div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">TIME</div><div class="v">${_fmtTime(timeSec)}</div></div>
+        <div class="stat"><div class="k">SCORE</div><div class="v">${score}</div></div>
+        <div class="stat"><div class="k">MAX WEAPON LV</div><div class="v">${maxWeaponLv}</div></div>
+        <div class="stat"><div class="k">STAGE</div><div class="v">1 - HOUSE</div></div>
+      </div>
+
+      <div class="btnRow">
+        <div class="btn danger" id="btnResRestart">RESTART</div>
+        <div class="btn" id="btnResStage">STAGE SELECT</div>
+        <div class="btn primary" id="btnResHome">HOME</div>
+      </div>
+    </div>
+  `;
+
+  root.style.display = "flex";
+
+  document.getElementById("btnResRestart").onclick = () => {
+    root.style.display = "none";
+    // 엔진에 restart API가 있으면 그걸 쓰고, 없으면 reload로 안전하게.
+    if (window.TEL && typeof TEL.restart === "function") TEL.restart();
+    else location.reload();
+  };
+
+  document.getElementById("btnResStage").onclick = () => {
+    location.href = "stage_select_ch1.html";
+  };
+
+  document.getElementById("btnResHome").onclick = () => {
+    location.href = "index.html";
+  };
+}
