@@ -1,7 +1,7 @@
-/* Terra Escape Lab - Engine (Stage 1 v5)
- * + Lose overlay modal with Restart + Stage Select buttons
- * + Longer stage via stage.boss.appearAt + boss maxHP from stage config
- * + Player sprite size driven by stage.playerSize (176)
+/* Terra Escape Lab - Engine (Stage 1 v6)
+ * ✅ Stats result modal (WIN/LOSE both)
+ * ✅ TEL.restart exposed for result modal
+ * ✅ Fallback result modal if Stage1_showResult is missing
  */
 (() => {
   const LOG_W = 360;
@@ -30,7 +30,7 @@
   }
 
   // =========================
-  // BGM (same as previous v4)
+  // BGM
   // =========================
   function createBGM() {
     const A = {
@@ -254,7 +254,12 @@
     return A;
   }
 
+  // =========================
+  // Engine API
+  // =========================
   window.TEL = {
+    restart: null,
+
     start(stage) {
       const canvas = document.getElementById("game");
       const ctx = canvas.getContext("2d", { alpha: false });
@@ -289,9 +294,11 @@
         return { x: (px - view.offX) / view.scale, y: (py - view.offY) / view.scale };
       }
 
+      // sprites
       const sprites = loadSprites(stage.sprites);
       window.__TEL_SPRITES__ = sprites;
 
+      // UI elements
       const elStart = document.getElementById("startLayer");
       const btnSwap = document.getElementById("btnSwap");
       const btnRestart = document.getElementById("btnRestart");
@@ -303,7 +310,9 @@
       const State = { TITLE: "TITLE", PLAY: "PLAY", WIN: "WIN", LOSE: "LOSE" };
       let stateNow = State.TITLE;
       let timeInPlay = 0;
+      let resultShown = false;
 
+      // entities
       const bullets = [];
       const enemies = [];
       const eBullets = [];
@@ -314,7 +323,7 @@
         y: LOG_H * 0.82,
         char: "LUCA",
         hp: 100,
-        r: 16, // hit radius (sprite는 176이어도 판정은 이 정도가 좋음)
+        r: 16,
         score: 0,
         weaponLv: { LUCA: 1, MARCA: 1 },
         maxWeaponLv: { LUCA: 1, MARCA: 1 },
@@ -334,70 +343,56 @@
         phase: 0
       };
 
-      // ===== Buttons for end screens =====
-      let btnStageSelect = null;
-      let btnLoseRestart = null;
-
-      function ensureStageSelectButton(show, topPercent=70) {
-        if (!btnStageSelect) {
-          btnStageSelect = document.createElement("button");
-          btnStageSelect.textContent = "스테이지 선택으로";
-          Object.assign(btnStageSelect.style, {
-            position: "fixed",
-            left: "50%",
-            top: `${topPercent}%`,
-            transform: "translate(-50%,-50%)",
-            padding: "12px 16px",
-            borderRadius: "14px",
-            border: "1px solid rgba(42,49,67,0.9)",
-            background: "rgba(12,16,28,0.78)",
-            color: "#e8f2ff",
-            fontWeight: "900",
-            fontSize: "14px",
-            zIndex: "9999",
-            display: "none",
-            cursor: "pointer"
-          });
-          btnStageSelect.addEventListener("click", () => location.href = "index.html");
-          document.body.appendChild(btnStageSelect);
-        }
-        btnStageSelect.style.display = show ? "block" : "none";
+      // ===== fallback result modal (if Stage1_showResult missing) =====
+      function _fmtTime(sec){
+        sec = Math.max(0, Math.floor(sec));
+        const m = String(Math.floor(sec/60)).padStart(2,"0");
+        const s = String(sec%60).padStart(2,"0");
+        return `${m}:${s}`;
       }
+      function showFallbackResult({ success, score, timeSec, maxWeaponLv }) {
+        const root = document.getElementById("resultOverlay");
+        if (!root) return;
 
-      function ensureLoseRestartButton(show, topPercent=62) {
-        if (!btnLoseRestart) {
-          btnLoseRestart = document.createElement("button");
-          btnLoseRestart.textContent = "RESTART";
-          Object.assign(btnLoseRestart.style, {
-            position: "fixed",
-            left: "50%",
-            top: `${topPercent}%`,
-            transform: "translate(-50%,-50%)",
-            padding: "12px 16px",
-            borderRadius: "14px",
-            border: "1px solid rgba(42,49,67,0.9)",
-            background: "rgba(140,60,60,0.35)",
-            color: "#e8f2ff",
-            fontWeight: "950",
-            fontSize: "14px",
-            zIndex: "9999",
-            display: "none",
-            cursor: "pointer"
-          });
-          btnLoseRestart.addEventListener("click", () => resetGame());
-          document.body.appendChild(btnLoseRestart);
-        }
-        btnLoseRestart.style.display = show ? "block" : "none";
-      }
+        const title = success ? "✅ MISSION CLEAR" : "❌ MISSION FAILED";
+        const sub = success
+          ? "감시 로봇 제거 완료. 탈출로 확보."
+          : "실험 실패. 안정성 저하.";
 
-      function hideEndButtons() {
-        ensureStageSelectButton(false);
-        ensureLoseRestartButton(false);
+        root.innerHTML = `
+          <div class="card">
+            <div class="title">${title}</div>
+            <div class="sub">${sub}</div>
+
+            <div class="stats">
+              <div class="stat"><div class="k">TIME</div><div class="v">${_fmtTime(timeSec)}</div></div>
+              <div class="stat"><div class="k">SCORE</div><div class="v">${score}</div></div>
+              <div class="stat"><div class="k">MAX WEAPON LV</div><div class="v">${maxWeaponLv}</div></div>
+              <div class="stat"><div class="k">STAGE</div><div class="v">1 - HOUSE</div></div>
+            </div>
+
+            <div class="btnRow">
+              <div class="btn danger" id="btnResRestart">RESTART</div>
+              <div class="btn" id="btnResStage">STAGE SELECT</div>
+              <div class="btn primary" id="btnResHome">HOME</div>
+            </div>
+          </div>
+        `;
+        root.style.display = "flex";
+
+        const rr = document.getElementById("btnResRestart");
+        const rs = document.getElementById("btnResStage");
+        const rh = document.getElementById("btnResHome");
+
+        if (rr) rr.onclick = () => { root.style.display="none"; if (window.TEL && typeof TEL.restart==="function") TEL.restart(); else location.reload(); };
+        if (rs) rs.onclick = () => { location.href = "stage_select_ch1.html"; };
+        if (rh) rh.onclick = () => { location.href = "index.html"; };
       }
 
       function resetGame() {
         stateNow = State.TITLE;
         timeInPlay = 0;
+        resultShown = false;
 
         player.x = LOG_W / 2;
         player.y = LOG_H * 0.82;
@@ -430,17 +425,50 @@
         BGM.setBossMode(false);
 
         if (elStart) elStart.style.display = "flex";
-        hideEndButtons();
+
+        const ro = document.getElementById("resultOverlay");
+        if (ro) ro.style.display = "none";
       }
+
+      // ✅ expose for result modal
+      window.TEL.restart = resetGame;
 
       async function startPlay() {
         if (stateNow !== State.TITLE) return;
         stateNow = State.PLAY;
         if (elStart) elStart.style.display = "none";
-        hideEndButtons();
 
         await BGM.start();
         syncBgmButton();
+      }
+
+      function finalizeResult(success) {
+        if (resultShown) return;
+        resultShown = true;
+
+        // stop urgent mode + keep audio state stable
+        BGM.setBossMode(false);
+
+        const maxLv = Math.max(player.maxWeaponLv.LUCA, player.maxWeaponLv.MARCA);
+        const timeSec = timeInPlay;
+
+        // ✅ WIN/LOSE 둘 다 통계 모달
+        if (typeof window.Stage1_showResult === "function") {
+          window.Stage1_showResult({
+            success,
+            score: player.score,
+            timeSec,
+            maxWeaponLv: maxLv
+          });
+        } else {
+          // ✅ 절대 안 뜨는 상황 방지
+          showFallbackResult({
+            success,
+            score: player.score,
+            timeSec,
+            maxWeaponLv: maxLv
+          });
+        }
       }
 
       // ===== input =====
@@ -555,6 +583,7 @@
           eBullets.push({ x:boss.x, y:boss.y+40, vx:Math.cos(ang)*speed, vy:Math.sin(ang)*speed, r:4.6, dmg:14, life:4.0, t:0 });
         }
       }
+
       function shootBossAimedBurst(burst=3, speed=340, gap=0.10) {
         const dx = player.x - boss.x, dy = player.y - boss.y;
         const dist = Math.max(1, Math.hypot(dx,dy));
@@ -566,6 +595,7 @@
           eBullets.push({ x:boss.x, y:boss.y+30, vx, vy, r:4.8, dmg:16, life:4.0, t:0 });
         }
       }
+
       function updateBossShooting(dt) {
         const hpRatio = boss.hp / boss.maxHP;
         boss.phase = (hpRatio < 0.25) ? 2 : (hpRatio < 0.55) ? 1 : 0;
@@ -603,7 +633,7 @@
         if (e) enemies.push(e);
       }
 
-      // draw helpers
+      // draw
       function drawBackground(dt) { stage.drawBackground(ctx, dt, { LOG_W, LOG_H, sprites, timeInPlay }); }
 
       function drawEnemy(e) {
@@ -685,38 +715,6 @@
         ctx.restore();
       }
 
-      function drawLoseOverlay() {
-        ctx.save();
-        ctx.fillStyle = "rgba(0,0,0,0.68)";
-        ctx.fillRect(0,0,LOG_W,LOG_H);
-
-        ctx.fillStyle = "rgba(255,200,200,0.95)";
-        ctx.textAlign = "center";
-        ctx.font = "950 22px system-ui";
-        ctx.fillText("MISSION FAILED", LOG_W/2, LOG_H*0.40);
-
-        ctx.fillStyle = "rgba(232,242,255,0.90)";
-        ctx.font = "650 13px system-ui";
-        ctx.fillText("실험체 안정도 붕괴 · 재시도 또는 스테이지 선택", LOG_W/2, LOG_H*0.40 + 24);
-
-        ctx.restore();
-        ctx.textAlign = "left";
-      }
-
-      function drawWinOverlay() {
-        ctx.save();
-        ctx.fillStyle = "rgba(0,0,0,0.60)";
-        ctx.fillRect(0,0,LOG_W,LOG_H);
-
-        ctx.fillStyle = "rgba(232,242,255,0.96)";
-        ctx.textAlign="center";
-        ctx.font="900 22px system-ui";
-        ctx.fillText("STAGE 1 CLEAR", LOG_W/2, LOG_H*0.40);
-
-        ctx.restore();
-        ctx.textAlign="left";
-      }
-
       // main loop
       let last = performance.now();
       function loop(t) {
@@ -725,6 +723,8 @@
 
         beginFrame();
         drawBackground(dt);
+
+        const ended = (stateNow === State.WIN || stateNow === State.LOSE);
 
         if (stateNow === State.PLAY) {
           timeInPlay += dt;
@@ -745,132 +745,129 @@
             }
           }
 
-          // ✅ boss appear time from stage config (now 늦음)
           if (!boss.active && timeInPlay >= (stage.boss?.appearAt ?? 40)) boss.active = true;
         }
 
-        // bullets
-        for (let i=bullets.length-1;i>=0;i--){
-          const b = bullets[i];
-          b.t += dt;
-          b.x += (b.vx??0)*dt;
-          b.y += (b.vy??-760)*dt;
-          if (b.t>b.life || b.y<-80 || b.x<-80 || b.x>LOG_W+80) bullets.splice(i,1);
-        }
-
-        // enemies
-        for (let i=enemies.length-1;i>=0;i--){
-          const e = enemies[i];
-          e.t = (e.t??0) + dt;
-          e.y += e.vy * dt;
-
-          if (e.baseX==null) e.baseX = e.x;
-          e.x = clamp(e.baseX + Math.sin(e.t*(e.weaveFreq??2.2))*(e.weaveAmp??48), 24, LOG_W-24);
-
-          e.shootCD = Math.max(0, (e.shootCD ?? rand(0.2,1.0)) - dt);
-          if (stateNow===State.PLAY && e.y>40 && e.shootCD<=0) {
-            if (Math.random() < (stage.enemyShootChancePerSec ?? 0.85) * dt) {
-              shootEnemyDown(e);
-              e.shootCD = rand(0.9,1.6);
-            }
+        // ===== update only while not ended =====
+        if (!ended) {
+          // bullets
+          for (let i=bullets.length-1;i>=0;i--){
+            const b = bullets[i];
+            b.t += dt;
+            b.x += (b.vx??0)*dt;
+            b.y += (b.vy??-760)*dt;
+            if (b.t>b.life || b.y<-80 || b.x<-80 || b.x>LOG_W+80) bullets.splice(i,1);
           }
 
-          if (e.y > LOG_H + 80) enemies.splice(i,1);
-        }
+          // enemies
+          for (let i=enemies.length-1;i>=0;i--){
+            const e = enemies[i];
+            e.t = (e.t??0) + dt;
+            e.y += e.vy * dt;
 
-        // boss
-        if (boss.active && stateNow===State.PLAY) {
-          boss.t += dt;
-          stage.updateBoss(boss, dt, { LOG_W, LOG_H });
+            if (e.baseX==null) e.baseX = e.x;
+            e.x = clamp(e.baseX + Math.sin(e.t*(e.weaveFreq??2.2))*(e.weaveAmp??48), 24, LOG_W-24);
 
-          const hpRatio = boss.hp / boss.maxHP;
-          BGM.setBossMode(hpRatio <= 0.5);
-
-          if (boss.entered) updateBossShooting(dt);
-
-          if (boss.hp <= 0) {
-            boss.hp = 0;
-            stateNow = State.WIN;
-            player.score += (stage.score?.bossKill ?? 900);
-            ensureStageSelectButton(true, 70);
-            ensureLoseRestartButton(false);
-            BGM.setBossMode(false);
-          }
-        }
-
-        // enemy bullets
-        for (let i=eBullets.length-1;i>=0;i--){
-          const b = eBullets[i];
-          b.t += dt;
-          b.x += b.vx*dt;
-          b.y += b.vy*dt;
-          if (b.t>(b.life??4.0) || b.y>LOG_H+120 || b.x<-120 || b.x>LOG_W+120) eBullets.splice(i,1);
-        }
-
-        // items
-        for (let i=items.length-1;i>=0;i--){
-          const it = items[i];
-          it.y += it.vy * dt;
-          if (it.y > LOG_H + 60) items.splice(i,1);
-        }
-
-        // collisions: bullets vs enemies/boss
-        for (let i=bullets.length-1;i>=0;i--){
-          const b = bullets[i];
-          let hit=false;
-
-          for (let j=enemies.length-1;j>=0;j--){
-            const e = enemies[j];
-            if (circleHit(b.x,b.y,b.r, e.x,e.y,e.r)) {
-              e.hp -= b.dmg; hit=true;
-              if (e.hp<=0) {
-                player.score += (stage.score?.enemyKill ?? 60);
-                maybeDropItemsOnKill(e.x,e.y);
-                enemies.splice(j,1);
+            e.shootCD = Math.max(0, (e.shootCD ?? rand(0.2,1.0)) - dt);
+            if (stateNow===State.PLAY && e.y>40 && e.shootCD<=0) {
+              if (Math.random() < (stage.enemyShootChancePerSec ?? 0.85) * dt) {
+                shootEnemyDown(e);
+                e.shootCD = rand(0.9,1.6);
               }
-              break;
+            }
+
+            if (e.y > LOG_H + 80) enemies.splice(i,1);
+          }
+
+          // boss
+          if (boss.active && stateNow===State.PLAY) {
+            boss.t += dt;
+            stage.updateBoss(boss, dt, { LOG_W, LOG_H });
+
+            const hpRatio = boss.hp / boss.maxHP;
+            BGM.setBossMode(hpRatio <= 0.5);
+
+            if (boss.entered) updateBossShooting(dt);
+
+            if (boss.hp <= 0) {
+              boss.hp = 0;
+              stateNow = State.WIN;
+              player.score += (stage.score?.bossKill ?? 900);
+              finalizeResult(true);   // ✅ WIN stats
             }
           }
 
-          if (!hit && boss.active && circleHit(b.x,b.y,b.r, boss.x,boss.y,boss.r)) {
-            boss.hp -= b.dmg; hit=true;
-          }
-
-          if (hit) bullets.splice(i,1);
-        }
-
-        // enemy bullets vs player
-        if (stateNow===State.PLAY) {
+          // enemy bullets
           for (let i=eBullets.length-1;i>=0;i--){
             const b = eBullets[i];
-            if (circleHit(b.x,b.y,b.r, player.x,player.y, player.r)) {
-              player.hp -= (b.dmg ?? 12);
-              eBullets.splice(i,1);
-              if (player.hp <= 0) {
-                player.hp = 0;
-                stateNow = State.LOSE;
-                // ✅ 실패 버튼 표시
-                ensureLoseRestartButton(true, 62);
-                ensureStageSelectButton(true, 70);
-                BGM.setBossMode(false);
+            b.t += dt;
+            b.x += b.vx*dt;
+            b.y += b.vy*dt;
+            if (b.t>(b.life??4.0) || b.y>LOG_H+120 || b.x<-120 || b.x>LOG_W+120) eBullets.splice(i,1);
+          }
+
+          // items
+          for (let i=items.length-1;i>=0;i--){
+            const it = items[i];
+            it.y += it.vy * dt;
+            if (it.y > LOG_H + 60) items.splice(i,1);
+          }
+
+          // collisions: bullets vs enemies/boss
+          for (let i=bullets.length-1;i>=0;i--){
+            const b = bullets[i];
+            let hit=false;
+
+            for (let j=enemies.length-1;j>=0;j--){
+              const e = enemies[j];
+              if (circleHit(b.x,b.y,b.r, e.x,e.y,e.r)) {
+                e.hp -= b.dmg; hit=true;
+                if (e.hp<=0) {
+                  player.score += (stage.score?.enemyKill ?? 60);
+                  maybeDropItemsOnKill(e.x,e.y);
+                  enemies.splice(j,1);
+                }
+                break;
+              }
+            }
+
+            if (!hit && boss.active && circleHit(b.x,b.y,b.r, boss.x,boss.y,boss.r)) {
+              boss.hp -= b.dmg; hit=true;
+            }
+
+            if (hit) bullets.splice(i,1);
+          }
+
+          // enemy bullets vs player
+          if (stateNow===State.PLAY) {
+            for (let i=eBullets.length-1;i>=0;i--){
+              const b = eBullets[i];
+              if (circleHit(b.x,b.y,b.r, player.x,player.y, player.r)) {
+                player.hp -= (b.dmg ?? 12);
+                eBullets.splice(i,1);
+                if (player.hp <= 0) {
+                  player.hp = 0;
+                  stateNow = State.LOSE;
+                  finalizeResult(false); // ✅ LOSE stats
+                }
+              }
+            }
+          }
+
+          // items pickup
+          if (stateNow===State.PLAY) {
+            for (let i=items.length-1;i>=0;i--){
+              const it = items[i];
+              if (circleHit(it.x,it.y,it.r, player.x,player.y, player.r+10)) {
+                if (it.type==="GUN") applyGunUpgrade();
+                if (it.type==="HEAL") applyHeal();
+                items.splice(i,1);
               }
             }
           }
         }
 
-        // items pickup
-        if (stateNow===State.PLAY) {
-          for (let i=items.length-1;i>=0;i--){
-            const it = items[i];
-            if (circleHit(it.x,it.y,it.r, player.x,player.y, player.r+10)) {
-              if (it.type==="GUN") applyGunUpgrade();
-              if (it.type==="HEAL") applyHeal();
-              items.splice(i,1);
-            }
-          }
-        }
-
-        // draw
+        // draw (even after end, so the last frame remains)
         for (const e of enemies) drawEnemy(e);
         drawBoss();
         drawItems();
@@ -884,9 +881,6 @@
         drawPlayer();
         drawDimIfNeeded();
         drawHUD();
-
-        if (stateNow===State.LOSE) drawLoseOverlay();
-        if (stateNow===State.WIN) drawWinOverlay();
 
         requestAnimationFrame(loop);
       }
