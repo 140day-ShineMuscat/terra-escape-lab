@@ -25,21 +25,17 @@ html,body{
   overflow:hidden;
 }
 
-#app{
-  height:100%;
-  display:flex;
-  flex-direction:column;
-}
+#app{ height:100%; display:flex; flex-direction:column; }
 
 /* ---------- Top Bar ---------- */
 .topbar{
-  padding:14px 16px 8px;
+  padding:14px 16px 10px;
   display:flex;
   align-items:center;
   justify-content:space-between;
 }
 .back{
-  font-size:16px;
+  font-size:13px;
   font-weight:800;
   color:var(--accent);
   cursor:pointer;
@@ -49,34 +45,6 @@ html,body{
   text-align:center;
   flex:1;
   font-weight:900;
-}
-.spacer{ width:60px; }
-
-/* ---------- Plan Image ---------- */
-.plan-wrap{
-  padding:6px 16px 10px;
-  display:flex;
-  justify-content:center;
-}
-.plan-card{
-  width:min(420px,92vw);
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:10px;
-  backdrop-filter:blur(10px);
-}
-.plan-card img{
-  width:100%;
-  height:auto;
-  border-radius:12px;
-  display:block;
-}
-.plan-caption{
-  margin-top:6px;
-  font-size:12px;
-  color:var(--muted);
-  text-align:center;
 }
 
 /* ---------- Stage List ---------- */
@@ -97,74 +65,47 @@ html,body{
   background:var(--panel);
   border:1px solid var(--border);
   backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
   cursor:pointer;
   user-select:none;
   position:relative;
 }
 .stage:active{ transform:translateY(2px); }
-
-.stage h2{
-  margin:0;
-  font-size:22px;
-  font-weight:900;
-}
-.stage p{
-  margin-top:6px;
-  font-size:18px;
-  color:var(--muted);
-}
+.stage h2{ margin:0; font-size:16px; font-weight:900; }
+.stage p{ margin-top:6px; font-size:13px; color:var(--muted); }
 
 .stage.open::after{
-  content:"START";
-  position:absolute;
-  right:14px; top:14px;
-  font-size:11px;
-  font-weight:900;
-  color:var(--accent);
+  content:"BRIEF";
+  position:absolute; right:14px; top:14px;
+  font-size:11px; font-weight:900; color:var(--accent);
 }
 
-.stage.lock{
-  opacity:.5;
-}
+.stage.lock{ opacity:.5; }
 .stage.lock::after{
   content:"LOCK";
-  position:absolute;
-  right:14px; top:14px;
-  font-size:11px;
-  font-weight:900;
-  color:var(--lock);
+  position:absolute; right:14px; top:14px;
+  font-size:11px; font-weight:900; color:var(--lock);
 }
 
 /* ---------- Lock Overlay ---------- */
 #lockOverlay{
-  position:fixed;
-  inset:0;
+  position:fixed; inset:0;
   background:rgba(0,0,0,0.55);
   display:none;
-  align-items:center;
-  justify-content:center;
+  align-items:center; justify-content:center;
   z-index:50;
 }
 .lockCard{
   width:min(360px,90vw);
   background:rgba(0,0,0,0.65);
+  border:1px solid rgba(255,255,255,0.15);
   border-radius:18px;
   padding:20px;
   text-align:center;
 }
-.lockCard h3{
-  margin:0;
-  font-size:18px;
-  font-weight:900;
-  color:#ff7b7b;
-}
-.lockCard p{
-  margin-top:10px;
-  font-size:13px;
-  color:var(--muted);
-}
+.lockCard h3{ margin:0; font-size:18px; font-weight:900; color:#ff7b7b; }
+.lockCard p{ margin-top:10px; font-size:13px; color:var(--muted); }
 
-/* ---------- Footer ---------- */
 .footer{
   text-align:center;
   padding:10px 0 14px;
@@ -177,50 +118,37 @@ html,body{
 <body>
 <div id="app">
 
-  <!-- Top Bar -->
   <div class="topbar">
     <div class="back" id="btnBack">← CHAPTER</div>
     <div class="chapterTitle">1장. 집</div>
     <div class="back" id="btnHome">🏠 HOME</div>
   </div>
 
-  <!-- Plan Image -->
-  <div class="plan-wrap">
-    <div class="plan-card">
-      <img src="assets/plan.png" alt="House Escape Plan">
-      <div class="plan-caption">실험 구역 · 화성 이주 계획 브리핑</div>
-    </div>
-  </div>
-
-  <!-- Stage List -->
   <div class="stage-list">
-
     <div class="stage open" data-stage="1">
-      <h2>Stage 1 · 로봇청소기 무력화</h2>
-      <p>인간이 보낸 감시 로봇을 파괴하라</p>
+      <h2>Stage 1 · 탈출 실험</h2>
+      <p>감시 로봇을 제거하고 안전한 탈출로를 확보하라</p>
     </div>
 
     <div class="stage lock" data-stage="2">
-      <h2>Stage 2 · 참치캔 회수</h2>
-      <p>인간이 숨겨놓은 참치캔을 모두 찾아라</p>
+      <h2>Stage 2 · 참치캔 찾기</h2>
+      <p>숨겨진 참치캔을 모두 찾아라</p>
     </div>
 
     <div class="stage lock" data-stage="3">
-      <h2>Stage 3 · 벽돌 제거</h2>
-      <p>벽돌을 제거하여 탈출 루트를 확보하라</p>
+      <h2>Stage 3 · 벽돌 실험</h2>
+      <p>장애물을 제거하고 길을 만들어라</p>
     </div>
 
     <div class="stage lock" data-stage="4">
-      <h2>Stage 4 · 굴뚝 대탈출</h2>
+      <h2>Stage 4 · 굴뚝 탈출</h2>
       <p>굴뚝 내부를 올라 집 밖으로 탈출하라</p>
     </div>
-
   </div>
 
   <div class="footer">TERRA ESCAPE LAB · CHAPTER 1</div>
 </div>
 
-<!-- LOCK Overlay -->
 <div id="lockOverlay">
   <div class="lockCard">
     <h3>🔒 실험 미개방</h3>
@@ -229,24 +157,22 @@ html,body{
 </div>
 
 <script>
-document.getElementById("btnBack").onclick = () => {
-  location.href = "index.html";
-};
-document.getElementById("btnHome").onclick = () => {
-  location.href = "index.html";
-};
+const lockOverlay = document.getElementById("lockOverlay");
+
+document.getElementById("btnBack").onclick = () => location.href="index.html";
+document.getElementById("btnHome").onclick = () => location.href="index.html";
 
 document.querySelectorAll(".stage").forEach(st=>{
   st.onclick = ()=>{
     if(st.classList.contains("open")){
-      location.href="stage1.html";
+      const num = st.dataset.stage;
+      if(num === "1") location.href = "stage1_mission.html"; // ✅ 브리핑 페이지로
     }else{
       lockOverlay.style.display="flex";
     }
   };
 });
-lockOverlay.onclick = ()=>lockOverlay.style.display="none";
+lockOverlay.onclick = ()=> lockOverlay.style.display="none";
 </script>
-
 </body>
 </html>
