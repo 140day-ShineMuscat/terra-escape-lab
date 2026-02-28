@@ -1,324 +1,269 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>루카와 마르카 : 지구탈출연구실</title>
-  <style>
-    :root{
-      --bg:#070a12;
-      --panel:rgba(12,16,28,0.78);
-      --line:rgba(42,49,67,0.95);
-      --text:#e8f2ff;
-      --muted:rgba(232,242,255,0.75);
-      --accent:rgba(118,210,200,0.85);
-      --danger:rgba(255,107,107,0.85);
-    }
-    *{ box-sizing:border-box; }
-    html,body{
-      height:100%;
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background:
-        radial-gradient(900px 700px at 50% 15%, rgba(30,40,80,0.35), transparent 60%),
-        radial-gradient(700px 600px at 50% 110%, rgba(20,80,70,0.22), transparent 60%),
-        var(--bg);
-      color:var(--text);
-      overflow-x:hidden;
-    }
+<meta charset="utf-8" />
+<meta name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>루카와 마르카 : 지구탈출연구실</title>
 
-    /* ✅ 모바일 세로 느낌: 가운데 카드 폭 제한 */
-    .wrap{
-      min-height:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding: 18px 14px 26px;
-    }
-    .card{
-      width:min(420px, 94vw);
-      background: rgba(0,0,0,0.25);
-      border:1px solid rgba(255,255,255,0.10);
-      border-radius:22px;
-      padding:16px 14px 14px;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 18px 55px rgba(0,0,0,0.55);
-    }
+<style>
+:root{
+  --bg:#070a12;
+  --card:#0c101c;
+  --line:rgba(255,255,255,0.12);
+  --accent:#76d2c8;
+  --text:#e8f2ff;
+  --muted:rgba(232,242,255,0.65);
+}
 
-    .top{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:12px;
-    }
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width:0;
-    }
-    .logo{
-      width:44px; height:44px;
-      border-radius:14px;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.06);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      flex:0 0 auto;
-    }
-    .logo img{
-      width:100%; height:100%;
-      object-fit:cover;
-      display:block;
-    }
-    .titleBox{ min-width:0; }
-    .title{
-      font-weight:950;
-      letter-spacing:0.2px;
-      font-size:16px;
-      line-height:1.15;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .subtitle{
-      margin-top:3px;
-      font-size:11px;
-      color:var(--muted);
-      letter-spacing:0.6px;
-    }
+*{ box-sizing:border-box; }
+html,body{
+  margin:0;
+  padding:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+}
 
-    .btn{
-      user-select:none;
-      -webkit-user-select:none;
-      cursor:pointer;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background: rgba(12,16,28,0.70);
-      color:var(--text);
-      font-weight:950;
-      font-size:12px;
-      padding:10px 12px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      transition: transform 0.06s ease;
-      white-space:nowrap;
-    }
-    .btn:active{ transform: translateY(1px); }
-    .btn.primary{
-      border-color: rgba(118,210,200,0.55);
-      background: rgba(118,210,200,0.14);
-    }
-    .btn.ghost{
-      border-color: rgba(255,255,255,0.14);
-      background: rgba(0,0,0,0.18);
-    }
+body{
+  display:flex;
+  justify-content:center;
+}
 
-    /* ✅ 1열 고정 (가로로 길게 안 늘림) */
-    .list{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      margin-top:8px;
-    }
+.app{
+  width:100%;
+  max-width:420px;
+  min-height:100vh;
+  padding:14px 14px 28px;
+}
 
-    .chapter{
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,0.12);
-      background: rgba(12,16,28,0.55);
-      padding:14px 14px 12px;
-      position:relative;
-      overflow:hidden;
-    }
-    .chapter:before{
-      content:"";
-      position:absolute;
-      inset:-70px -70px auto auto;
-      width:240px; height:240px;
-      background: radial-gradient(circle at 30% 30%, rgba(118,210,200,0.22), transparent 60%);
-      transform: rotate(18deg);
-      pointer-events:none;
-    }
-    .chapter.locked:before{
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.10), transparent 60%);
-    }
+/* ===== HEADER ===== */
+.header{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  margin-bottom:18px;
+}
 
-    .chHead{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:10px;
-      position:relative;
-      z-index:1;
-    }
-    .chName{
-      font-weight:950;
-      font-size:15px;
-    }
-    .badge{
-      flex:0 0 auto;
-      font-size:11px;
-      font-weight:950;
-      padding:6px 8px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.14);
-      background: rgba(0,0,0,0.18);
-      color: rgba(232,242,255,0.85);
-    }
-    .badge.ready{
-      border-color: rgba(118,210,200,0.55);
-      background: rgba(118,210,200,0.12);
-      color: rgba(166,255,176,0.95);
-    }
-    .badge.lock{ opacity:0.8; }
+.titleBox{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px;
+  border-radius:18px;
+  background:rgba(12,16,28,0.7);
+  border:1px solid var(--line);
+}
 
-    .desc{
-      margin-top:8px;
-      font-size:13px;
-      color: rgba(232,242,255,0.86);
-      line-height:1.35;
-      position:relative;
-      z-index:1;
-    }
-    .desc small{
-      display:block;
-      margin-top:6px;
-      font-size:12px;
-      color: var(--muted);
-    }
+.logo{
+  width:48px;
+  height:48px;
+  border-radius:14px;
+  background:#111;
+  object-fit:contain;
+}
 
-    .chBtnRow{
-      margin-top:12px;
-      display:flex;
-      gap:10px;
-      position:relative;
-      z-index:1;
-    }
-    .chBtnRow .btn{ width:100%; }
+.titleText{
+  display:flex;
+  flex-direction:column;
+}
 
-    .footer{
-      margin-top:14px;
-      padding-top:12px;
-      border-top:1px solid rgba(255,255,255,0.10);
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      color:var(--muted);
-      font-size:11px;
-      letter-spacing:0.4px;
-    }
-  </style>
+.titleMain{
+  font-size:18px;
+  font-weight:950;
+  line-height:1.1;
+}
+
+.titleSub{
+  font-size:11px;
+  letter-spacing:1.4px;
+  opacity:0.75;
+}
+
+/* header buttons */
+.headerBtns{
+  display:flex;
+  gap:10px;
+}
+
+.btn{
+  flex:1;
+  padding:12px 10px;
+  border-radius:16px;
+  font-weight:900;
+  font-size:13px;
+  border:1px solid var(--line);
+  background:rgba(12,16,28,0.6);
+  color:var(--text);
+}
+
+.btn:active{ transform:translateY(1px); }
+
+.btn.accent{
+  background:rgba(118,210,200,0.18);
+  border-color:rgba(118,210,200,0.55);
+}
+
+/* ===== SECTION ===== */
+.sectionTitle{
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:1px;
+  opacity:0.7;
+  margin:6px 4px 12px;
+}
+
+/* ===== CHAPTER CARD ===== */
+.chapter{
+  background:linear-gradient(135deg, rgba(30,60,70,0.25), rgba(10,12,22,0.9));
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:18px 16px;
+  margin-bottom:16px;
+}
+
+.chapter.locked{
+  opacity:0.55;
+}
+
+.chapterHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+
+.chapterTitle{
+  font-size:20px;
+  font-weight:950;
+}
+
+.badge{
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  background:rgba(0,0,0,0.35);
+  border:1px solid var(--line);
+}
+
+.badge.ready{
+  background:rgba(118,210,200,0.18);
+  border-color:rgba(118,210,200,0.55);
+  color:#bff5ee;
+}
+
+.badge.lock{
+  opacity:0.8;
+}
+
+.chapterDesc{
+  font-size:14px;
+  line-height:1.4;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+
+.chapterSub{
+  font-size:13px;
+  opacity:0.7;
+  margin-bottom:14px;
+}
+
+.chapterBtn{
+  width:100%;
+  padding:14px;
+  border-radius:18px;
+  font-size:15px;
+  font-weight:950;
+  border:1px solid var(--line);
+  background:rgba(12,16,28,0.6);
+  color:var(--text);
+}
+
+.chapterBtn.enter{
+  background:rgba(118,210,200,0.18);
+  border-color:rgba(118,210,200,0.55);
+}
+
+.chapterBtn.locked{
+  opacity:0.6;
+}
+</style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="top">
-        <div class="brand">
-          <div class="logo" aria-label="TERRA ESCAPE LAB logo">
-            <img src="assets/logo.png" alt="logo"
-              onerror="this.style.display='none'; this.parentElement.textContent='TEL'; this.parentElement.style.fontWeight='950';" />
-          </div>
-          <div class="titleBox">
-            <div class="title">루카와 마르카 : 지구탈출연구실</div>
-            <div class="subtitle">TERRA ESCAPE LAB · CHAPTER SELECT</div>
-          </div>
-        </div>
+<div class="app">
 
-        <div style="display:flex; gap:10px;">
-          <div class="btn primary" id="btnRank">🏆 RANKING</div>
-          <div class="btn ghost" id="btnResetConfirm">🧹 RESET?</div>
-        </div>
+  <!-- ===== HEADER ===== -->
+  <div class="header">
+    <div class="titleBox">
+      <img src="assets/logo.png" class="logo" alt="Terra Escape Lab" />
+      <div class="titleText">
+        <div class="titleMain">루카와 마르카</div>
+        <div class="titleSub">TERRA ESCAPE LAB</div>
       </div>
+    </div>
 
-      <div class="list">
-        <div class="chapter" id="ch1">
-          <div class="chHead">
-            <div class="chName">1장. 집</div>
-            <div class="badge ready">READY</div>
-          </div>
-          <div class="desc">
-            탈출! 인간의 집
-            <small>Stage 1~4</small>
-          </div>
-          <div class="chBtnRow">
-            <div class="btn primary" id="btnGoCh1">ENTER</div>
-          </div>
-        </div>
-
-        <div class="chapter locked">
-          <div class="chHead">
-            <div class="chName">2장. 지구</div>
-            <div class="badge lock">LOCK</div>
-          </div>
-          <div class="desc">
-            우주 로켓 탈취 대작전!
-            <small>준비중</small>
-          </div>
-          <div class="chBtnRow">
-            <div class="btn" style="opacity:0.55; cursor:not-allowed;">LOCKED</div>
-          </div>
-        </div>
-
-        <div class="chapter locked">
-          <div class="chHead">
-            <div class="chName">3장. 우주</div>
-            <div class="badge lock">LOCK</div>
-          </div>
-          <div class="desc">
-            가자! 달과 화성으로
-            <small>준비중</small>
-          </div>
-          <div class="chBtnRow">
-            <div class="btn" style="opacity:0.55; cursor:not-allowed;">LOCKED</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="footer">
-        <div>© Terra Escape Lab · Offline local ranking (localStorage)</div>
-        <div>모바일: 세로 화면 기준 · 드래그 이동 · 자동 발사</div>
-      </div>
+    <div class="headerBtns">
+      <button class="btn accent" onclick="location.href='rank.html'">🏆 RANKING</button>
+      <button class="btn" onclick="resetConfirm()">🧹 RESET</button>
     </div>
   </div>
 
-  <script>
-    document.getElementById("btnGoCh1").onclick = () => location.href = "stage_select_ch1.html";
-    document.getElementById("btnRank").onclick  = () => location.href = "rank.html";
+  <!-- ===== CHAPTER SELECT ===== -->
+  <div class="sectionTitle">CHAPTER SELECT</div>
 
-    // reset (2-step confirm)
-    let armed = false;
-    const btnReset = document.getElementById("btnResetConfirm");
-    btnReset.onclick = () => {
-      if (!armed) {
-        armed = true;
-        btnReset.textContent = "⚠️ CONFIRM";
-        btnReset.style.borderColor = "rgba(255,107,107,0.55)";
-        btnReset.style.background = "rgba(255,107,107,0.12)";
-        setTimeout(() => {
-          armed = false;
-          btnReset.textContent = "🧹 RESET?";
-          btnReset.style.borderColor = "";
-          btnReset.style.background = "";
-        }, 2200);
-        return;
-      }
-      try {
-        localStorage.removeItem("TEL_RANK_GLOBAL");
-        localStorage.removeItem("TEL_RANK_STAGE");
-        localStorage.removeItem("TEL_PLAYER_NAME");
-      } catch(e){}
-      alert("랭킹 데이터 초기화 완료!");
-      armed = false;
-      btnReset.textContent = "🧹 RESET?";
-      btnReset.style.borderColor = "";
-      btnReset.style.background = "";
-    };
-  </script>
+  <!-- Chapter 1 -->
+  <div class="chapter">
+    <div class="chapterHeader">
+      <div class="chapterTitle">1장. 집</div>
+      <div class="badge ready">READY</div>
+    </div>
+    <div class="chapterDesc">탈출! 인간의 집</div>
+    <div class="chapterSub">Stage 1 ~ 4</div>
+    <button class="chapterBtn enter"
+      onclick="location.href='stage_select_ch1.html'">
+      ENTER
+    </button>
+  </div>
+
+  <!-- Chapter 2 -->
+  <div class="chapter locked">
+    <div class="chapterHeader">
+      <div class="chapterTitle">2장. 지구</div>
+      <div class="badge lock">LOCK</div>
+    </div>
+    <div class="chapterDesc">우주 로켓 탈취 대작전!</div>
+    <div class="chapterSub">준비중</div>
+    <button class="chapterBtn locked" disabled>
+      LOCKED
+    </button>
+  </div>
+
+  <!-- Chapter 3 -->
+  <div class="chapter locked">
+    <div class="chapterHeader">
+      <div class="chapterTitle">3장. 우주</div>
+      <div class="badge lock">LOCK</div>
+    </div>
+    <div class="chapterDesc">가자! 달과 화성으로</div>
+    <div class="chapterSub">준비중</div>
+    <button class="chapterBtn locked" disabled>
+      LOCKED
+    </button>
+  </div>
+
+</div>
+
+<script>
+function resetConfirm(){
+  if (!confirm("모든 랭킹 데이터를 초기화할까요?")) return;
+  localStorage.removeItem("TEL_RANK_GLOBAL");
+  localStorage.removeItem("TEL_RANK_STAGE");
+  alert("랭킹 데이터가 초기화되었습니다.");
+}
+</script>
+
 </body>
 </html>
