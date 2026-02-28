@@ -442,34 +442,25 @@
         syncBgmButton();
       }
 
-      function finalizeResult(success) {
-        if (resultShown) return;
-        resultShown = true;
+function finalizeResult(success) {
+  if (resultShown) return;
+  resultShown = true;
 
-        // stop urgent mode + keep audio state stable
-        BGM.setBossMode(false);
+  BGM.setBossMode(false);
 
-        const maxLv = Math.max(player.maxWeaponLv.LUCA, player.maxWeaponLv.MARCA);
-        const timeSec = timeInPlay;
+  const stageId = stage.stageId || "1-1";
+  const maxLv = Math.max(player.maxWeaponLv.LUCA, player.maxWeaponLv.MARCA);
 
-        // ✅ WIN/LOSE 둘 다 통계 모달
-        if (typeof window.Stage1_showResult === "function") {
-          window.Stage1_showResult({
-            success,
-            score: player.score,
-            timeSec,
-            maxWeaponLv: maxLv
-          });
-        } else {
-          // ✅ 절대 안 뜨는 상황 방지
-          showFallbackResult({
-            success,
-            score: player.score,
-            timeSec,
-            maxWeaponLv: maxLv
-          });
-        }
-      }
+  if (window.TEL && typeof window.TEL.showResult === "function") {
+    window.TEL.showResult({
+      success,
+      score: player.score,
+      timeSec: timeInPlay,
+      maxWeaponLv: maxLv,
+      stageId
+    });
+  }
+}
 
       // ===== input =====
       async function onPointerDown(e) {
