@@ -1,204 +1,324 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>루카와 마르카 : 지구탈출연구실</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>루카와 마르카 : 지구탈출연구실</title>
+  <style>
+    :root{
+      --bg:#070a12;
+      --panel:rgba(12,16,28,0.78);
+      --line:rgba(42,49,67,0.95);
+      --text:#e8f2ff;
+      --muted:rgba(232,242,255,0.75);
+      --accent:rgba(118,210,200,0.85);
+      --danger:rgba(255,107,107,0.85);
+    }
+    *{ box-sizing:border-box; }
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background:
+        radial-gradient(900px 700px at 50% 15%, rgba(30,40,80,0.35), transparent 60%),
+        radial-gradient(700px 600px at 50% 110%, rgba(20,80,70,0.22), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      overflow-x:hidden;
+    }
 
-<style>
-:root{
-  --bg:#0b0b0f;
-  --panel:rgba(12,16,28,0.72);
-  --border:rgba(42,49,67,0.9);
-  --text:#e8f2ff;
-  --muted:rgba(232,242,255,0.6);
-  --accent:#76d2c8;
-  --lock:#ff6b6b;
-}
+    /* ✅ 모바일 세로 느낌: 가운데 카드 폭 제한 */
+    .wrap{
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 18px 14px 26px;
+    }
+    .card{
+      width:min(420px, 94vw);
+      background: rgba(0,0,0,0.25);
+      border:1px solid rgba(255,255,255,0.10);
+      border-radius:22px;
+      padding:16px 14px 14px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 18px 55px rgba(0,0,0,0.55);
+    }
 
-html,body{
-  margin:0; padding:0;
-  height:100%;
-  background:var(--bg);
-  color:var(--text);
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  overflow:hidden;
-}
+    .top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .logo{
+      width:44px; height:44px;
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 auto;
+    }
+    .logo img{
+      width:100%; height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .titleBox{ min-width:0; }
+    .title{
+      font-weight:950;
+      letter-spacing:0.2px;
+      font-size:16px;
+      line-height:1.15;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .subtitle{
+      margin-top:3px;
+      font-size:11px;
+      color:var(--muted);
+      letter-spacing:0.6px;
+    }
 
-#app{
-  height:100%;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:18px;
-}
+    .btn{
+      user-select:none;
+      -webkit-user-select:none;
+      cursor:pointer;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(12,16,28,0.70);
+      color:var(--text);
+      font-weight:950;
+      font-size:12px;
+      padding:10px 12px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      transition: transform 0.06s ease;
+      white-space:nowrap;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      border-color: rgba(118,210,200,0.55);
+      background: rgba(118,210,200,0.14);
+    }
+    .btn.ghost{
+      border-color: rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.18);
+    }
 
-/* ---------- Title ---------- */
-.title{
-  text-align:center;
-}
+    /* ✅ 1열 고정 (가로로 길게 안 늘림) */
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      margin-top:8px;
+    }
 
-.logo-img{
-  width:200px;
-  height:auto;
-  margin:0 auto 10px;
-  display:block;
-}
+    .chapter{
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(12,16,28,0.55);
+      padding:14px 14px 12px;
+      position:relative;
+      overflow:hidden;
+    }
+    .chapter:before{
+      content:"";
+      position:absolute;
+      inset:-70px -70px auto auto;
+      width:240px; height:240px;
+      background: radial-gradient(circle at 30% 30%, rgba(118,210,200,0.22), transparent 60%);
+      transform: rotate(18deg);
+      pointer-events:none;
+    }
+    .chapter.locked:before{
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.10), transparent 60%);
+    }
 
-.title h1{
-  margin:0;
-  font-size:22px;
-  font-weight:900;
-}
-.title .sub{
-  margin-top:6px;
-  font-size:13px;
-  color:var(--muted);
-}
-.title .logo{
-  margin-top:8px;
-  font-size:13px;
-  font-weight:900;
-  letter-spacing:1px;
-  color:var(--accent);
-}
+    .chHead{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      position:relative;
+      z-index:1;
+    }
+    .chName{
+      font-weight:950;
+      font-size:15px;
+    }
+    .badge{
+      flex:0 0 auto;
+      font-size:11px;
+      font-weight:950;
+      padding:6px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.18);
+      color: rgba(232,242,255,0.85);
+    }
+    .badge.ready{
+      border-color: rgba(118,210,200,0.55);
+      background: rgba(118,210,200,0.12);
+      color: rgba(166,255,176,0.95);
+    }
+    .badge.lock{ opacity:0.8; }
 
-/* ---------- Chapter Cards ---------- */
-.chapter-list{
-  width:min(420px,92vw);
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
+    .desc{
+      margin-top:8px;
+      font-size:13px;
+      color: rgba(232,242,255,0.86);
+      line-height:1.35;
+      position:relative;
+      z-index:1;
+    }
+    .desc small{
+      display:block;
+      margin-top:6px;
+      font-size:12px;
+      color: var(--muted);
+    }
 
-.chapter{
-  position:relative;
-  padding:16px;
-  border-radius:18px;
-  background:var(--panel);
-  border:1px solid var(--border);
-  backdrop-filter:blur(10px);
-  cursor:pointer;
-  user-select:none;
-}
-.chapter:active{ transform:translateY(2px); }
+    .chBtnRow{
+      margin-top:12px;
+      display:flex;
+      gap:10px;
+      position:relative;
+      z-index:1;
+    }
+    .chBtnRow .btn{ width:100%; }
 
-.chapter h2{
-  margin:0;
-  font-size:16px;
-  font-weight:900;
-}
-.chapter p{
-  margin-top:6px;
-  font-size:13px;
-  color:var(--muted);
-}
-
-.chapter.open::after{
-  content:"OPEN";
-  position:absolute;
-  right:14px; top:14px;
-  font-size:11px;
-  font-weight:900;
-  color:var(--accent);
-}
-
-.chapter.lock{
-  opacity:.55;
-}
-.chapter.lock::after{
-  content:"LOCK";
-  position:absolute;
-  right:14px; top:14px;
-  font-size:11px;
-  font-weight:900;
-  color:var(--lock);
-}
-
-/* ---------- Lock Overlay ---------- */
-#lockOverlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.55);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:50;
-}
-.lockCard{
-  width:min(360px,90vw);
-  background:rgba(0,0,0,.65);
-  border-radius:18px;
-  padding:20px;
-  text-align:center;
-}
-.lockCard h3{
-  margin:0;
-  font-size:18px;
-  font-weight:900;
-  color:#ff7b7b;
-}
-.lockCard p{
-  margin-top:10px;
-  font-size:13px;
-  color:var(--muted);
-}
-
-.footer{
-  position:absolute;
-  bottom:14px;
-  font-size:11px;
-  color:var(--muted);
-}
-</style>
+    .footer{
+      margin-top:14px;
+      padding-top:12px;
+      border-top:1px solid rgba(255,255,255,0.10);
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:0.4px;
+    }
+  </style>
 </head>
-
 <body>
-<div id="app">
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div class="brand">
+          <div class="logo" aria-label="TERRA ESCAPE LAB logo">
+            <img src="assets/logo.png" alt="logo"
+              onerror="this.style.display='none'; this.parentElement.textContent='TEL'; this.parentElement.style.fontWeight='950';" />
+          </div>
+          <div class="titleBox">
+            <div class="title">루카와 마르카 : 지구탈출연구실</div>
+            <div class="subtitle">TERRA ESCAPE LAB · CHAPTER SELECT</div>
+          </div>
+        </div>
 
-  <div class="title">
-    <!-- 🔬 연구실 로고 -->
-    <img src="assets/logo.png" class="logo-img" alt="Terra Escape Lab Logo">
-    <h1>루카와 마르카 : 지구탈출연구실</h1>
-    <div class="sub">Chapter Select</div>
-    <div class="logo">TERRA ESCAPE LAB</div>
+        <div style="display:flex; gap:10px;">
+          <div class="btn primary" id="btnRank">🏆 RANKING</div>
+          <div class="btn ghost" id="btnResetConfirm">🧹 RESET?</div>
+        </div>
+      </div>
+
+      <div class="list">
+        <div class="chapter" id="ch1">
+          <div class="chHead">
+            <div class="chName">1장. 집</div>
+            <div class="badge ready">READY</div>
+          </div>
+          <div class="desc">
+            탈출! 인간의 집
+            <small>Stage 1~4</small>
+          </div>
+          <div class="chBtnRow">
+            <div class="btn primary" id="btnGoCh1">ENTER</div>
+          </div>
+        </div>
+
+        <div class="chapter locked">
+          <div class="chHead">
+            <div class="chName">2장. 지구</div>
+            <div class="badge lock">LOCK</div>
+          </div>
+          <div class="desc">
+            우주 로켓 탈취 대작전!
+            <small>준비중</small>
+          </div>
+          <div class="chBtnRow">
+            <div class="btn" style="opacity:0.55; cursor:not-allowed;">LOCKED</div>
+          </div>
+        </div>
+
+        <div class="chapter locked">
+          <div class="chHead">
+            <div class="chName">3장. 우주</div>
+            <div class="badge lock">LOCK</div>
+          </div>
+          <div class="desc">
+            가자! 달과 화성으로
+            <small>준비중</small>
+          </div>
+          <div class="chBtnRow">
+            <div class="btn" style="opacity:0.55; cursor:not-allowed;">LOCKED</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>© Terra Escape Lab · Offline local ranking (localStorage)</div>
+        <div>모바일: 세로 화면 기준 · 드래그 이동 · 자동 발사</div>
+      </div>
+    </div>
   </div>
 
-  <div class="chapter-list">
-    <div class="chapter open">
-      <h2>1장. 집</h2>
-      <p>탈출! 인간의 집</p>
-    </div>
-    <div class="chapter lock">
-      <h2>2장. 지구</h2>
-      <p>우주 로켓 탈취 대작전! (준비중)</p>
-    </div>
-    <div class="chapter lock">
-      <h2>3장. 우주</h2>
-      <p>가자! 달과 화성으로 (준비중)</p>
-    </div>
-  </div>
+  <script>
+    document.getElementById("btnGoCh1").onclick = () => location.href = "stage_select_ch1.html";
+    document.getElementById("btnRank").onclick  = () => location.href = "rank.html";
 
-  <div class="footer">© Terra Escape Lab</div>
-</div>
-
-<div id="lockOverlay">
-  <div class="lockCard">
-    <h3>🔒 연구 데이터 부족</h3>
-    <p>해당 챕터는 준비 중입니다.</p>
-  </div>
-</div>
-
-<script>
-document.querySelector(".chapter.open").onclick = () => {
-  location.href = "stage_select_ch1.html";
-};
-document.querySelectorAll(".chapter.lock").forEach(el=>{
-  el.onclick = ()=>lockOverlay.style.display="flex";
-});
-lockOverlay.onclick = ()=>lockOverlay.style.display="none";
-</script>
-
+    // reset (2-step confirm)
+    let armed = false;
+    const btnReset = document.getElementById("btnResetConfirm");
+    btnReset.onclick = () => {
+      if (!armed) {
+        armed = true;
+        btnReset.textContent = "⚠️ CONFIRM";
+        btnReset.style.borderColor = "rgba(255,107,107,0.55)";
+        btnReset.style.background = "rgba(255,107,107,0.12)";
+        setTimeout(() => {
+          armed = false;
+          btnReset.textContent = "🧹 RESET?";
+          btnReset.style.borderColor = "";
+          btnReset.style.background = "";
+        }, 2200);
+        return;
+      }
+      try {
+        localStorage.removeItem("TEL_RANK_GLOBAL");
+        localStorage.removeItem("TEL_RANK_STAGE");
+        localStorage.removeItem("TEL_PLAYER_NAME");
+      } catch(e){}
+      alert("랭킹 데이터 초기화 완료!");
+      armed = false;
+      btnReset.textContent = "🧹 RESET?";
+      btnReset.style.borderColor = "";
+      btnReset.style.background = "";
+    };
+  </script>
 </body>
 </html>
