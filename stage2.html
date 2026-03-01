@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>루카와 마르카 : 지구탈출연구실 - STAGE 2</title>
+
+<style>
+:root{
+  --bg:#07080c;
+  --panel:rgba(12,16,28,0.72);
+  --border:rgba(42,49,67,0.9);
+  --text:#e8f2ff;
+  --muted:rgba(232,242,255,0.65);
+  --accent:#76d2c8;
+  --danger:#ff6b6b;
+}
+
+html,body{
+  margin:0; padding:0;
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  overflow:hidden;
+  touch-action:none;
+}
+
+#app{ height:100%; display:flex; flex-direction:column; }
+
+.topbar{
+  padding:10px 10px 8px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.btn{
+  flex:1;
+  text-align:center;
+  padding:12px 10px;
+  border-radius:16px;
+  background: rgba(12,16,28,0.70);
+  border:1px solid var(--border);
+  color:var(--text);
+  font-weight:900;
+  font-size:12px;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:none;
+}
+.btn:active{ transform: translateY(1px); }
+.btn.primary{
+  background: rgba(118,210,200,0.16);
+  border-color: rgba(118,210,200,0.55);
+}
+.btn.danger{
+  background: rgba(255,107,107,0.14);
+  border-color: rgba(255,107,107,0.45);
+}
+
+.hud{
+  margin:0 10px;
+  padding:10px 12px;
+  border-radius:16px;
+  background: rgba(0,0,0,0.28);
+  border:1px solid rgba(255,255,255,0.10);
+  font-size:12px;
+  color:var(--muted);
+}
+
+.stageArea{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px;
+}
+
+.boardWrap{
+  width:min(520px, 96vw);
+  height:min(860px, calc(100vh - 150px));
+  background: rgba(0,0,0,0.18);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:18px;
+  padding:10px;
+  box-sizing:border-box;
+  display:flex;
+}
+
+#board{
+  flex:1;
+  display:grid;
+  gap:6px;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:none;
+}
+
+.cell{
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.10);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:950;
+  font-size:16px;
+  line-height:1;
+  box-sizing:border-box;
+  min-width:0; min-height:0;
+}
+
+.cell.closed{ background: rgba(12,16,28,0.72); }
+.cell.closed:active{ transform: translateY(1px); background: rgba(20,26,44,0.75); }
+
+.cell.open{ background: rgba(255,255,255,0.06); }
+
+/* ✅ 숫자도 참치도 없는 칸 = 흰색 */
+.cell.blank{
+  background: rgba(255,255,255,0.90);
+  border-color: rgba(255,255,255,0.45);
+}
+
+/* ✅ 숫자 글씨는 하얗게 */
+.cell.num{
+  color: rgba(255,255,255,0.98);
+  text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+}
+
+.cell.flag{
+  background: rgba(118,210,200,0.10);
+  border-color: rgba(118,210,200,0.35);
+  font-size:18px;
+}
+.cell.fish{ background: rgba(255,255,255,0.06); }
+
+.footer{
+  padding:10px 0 14px;
+  text-align:center;
+  font-size:11px;
+  color:rgba(232,242,255,0.55);
+}
+
+/* ===== Result overlay ===== */
+#resultOverlay{
+  position:fixed; inset:0;
+  display:none;
+  align-items:center; justify-content:center;
+  background:rgba(0,0,0,0.60);
+  z-index:9999;
+  touch-action:none;
+}
+
+#resultOverlay .card{
+  width:min(520px, 94vw);
+  background: rgba(12,16,28,0.86);
+  border:1px solid rgba(42,49,67,0.95);
+  border-radius:20px;
+  padding:16px 14px;
+  color:var(--text);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  text-align:center;
+}
+#resultOverlay .title{ font-size:18px; font-weight:950; margin:0 0 6px 0; }
+#resultOverlay .sub{ font-size:12px; opacity:0.85; margin:0 0 14px 0; }
+
+#resultOverlay .stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin:10px 0 12px;
+}
+#resultOverlay .stat{
+  background: rgba(0,0,0,0.28);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:14px;
+  padding:10px 10px;
+}
+#resultOverlay .k{ font-size:11px; opacity:0.75; }
+#resultOverlay .v{ font-size:16px; font-weight:950; margin-top:4px; }
+
+#resultOverlay .nameBlock{ text-align:left; margin-top:8px; }
+#resultOverlay .nameLabel{ font-size:11px; opacity:0.8; margin:0 0 6px 2px; }
+#resultOverlay input{
+  width:100%;
+  box-sizing:border-box;
+  padding:12px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.16);
+  background: rgba(0,0,0,0.25);
+  color:var(--text);
+  outline:none;
+  font-weight:900;
+  font-size:14px;
+}
+#resultOverlay .rankMsg{
+  margin:8px 2px 0;
+  font-size:12px;
+  opacity:0.9;
+}
+
+#resultOverlay .btnRow{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
+}
+#resultOverlay button.btn{
+  border-radius:16px;
+  padding:12px 10px;
+  font-weight:950;
+  font-size:13px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="btn" id="btnStage">← STAGE</div>
+    <div class="btn primary" id="btnMode">MODE: OPEN</div>
+    <div class="btn danger" id="btnRestart">RESTART</div>
+  </div>
+
+  <div class="hud" id="hudText">TIME 00:00 · OPEN 0/0 · FLAG 0/0</div>
+
+  <div class="stageArea">
+    <div class="boardWrap">
+      <div id="board"></div>
+    </div>
+  </div>
+
+  <div class="footer">CHAPTER 1 · STAGE 2 (TUNA SWEEPER)</div>
+</div>
+
+<div id="resultOverlay"></div>
+
+<!-- ✅ 네 구조에 맞게: stage2.html(루트)에서 js/rank.js -->
+<script src="js/rank.js"></script>
+<script src="js/stage2.js"></script>
+</body>
+</html>
